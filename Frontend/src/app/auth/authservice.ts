@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { BehaviorSubject, firstValueFrom, Observable, tap  } from 'rxjs';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../shared/models/user';
 
@@ -8,26 +8,14 @@ import { User } from '../shared/models/user';
   providedIn: 'root',
 })
 export class Authservice {
-  private loggedIn = new BehaviorSubject<boolean>(false);
-  isLoggedIn$ = this.loggedIn.asObservable();
-  
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  currentUser$ = this.currentUserSubject.asObservable();
-  
+
+  loggedIn = signal(false);
+  currentUser = signal<User | null>(null);
+
   private baseUrl = 'http://localhost:8080/';
 
-  constructor(private http: HttpClient) {}
-
-  get isLoggedIn(): boolean {
-    return this.loggedIn.value;
-  }
-
-  get currentUser(): User | null {
-    return this.currentUserSubject.value;
-  }
-
-  get role(): string | undefined {
-    return this.currentUserSubject.value?.role;
+  constructor(private http: HttpClient) {
+    this.checkAuth();
   }
 
   login(email: string, password: string): Observable<User> {
@@ -36,24 +24,19 @@ export class Authservice {
       { email, password }
     ).pipe(
       tap(response => {
-
         localStorage.setItem('auth-token', response.token);
+        localStorage.setItem('current-user', JSON.stringify(response));
 
-        localStorage.setItem(
-          'current-user',
-          JSON.stringify(response)
-        );
-
-        this.loggedIn.next(true);
-        this.currentUserSubject.next(response);
+        this.loggedIn.set(true);
+        this.currentUser.set(response);
       })
     );
   }
 
   logout(): void {
-    this.loggedIn.next(false);
-    this.currentUserSubject.next(null);
-    
+    this.loggedIn.set(false);
+    this.currentUser.set(null);
+
     localStorage.removeItem('auth-token');
     localStorage.removeItem('current-user');
   }
@@ -62,16 +45,16 @@ export class Authservice {
     const token = localStorage.getItem('auth-token');
     const user = localStorage.getItem('current-user');
 
-    this.loggedIn.next(!!token);
+    this.loggedIn.set(!!token);
 
     if (user) {
-      this.currentUserSubject.next(JSON.parse(user));
+      this.currentUser.set(JSON.parse(user));
     }
   }
 
   updateProfile(user: User): void {
-    this.currentUserSubject.next(user);
-    localStorage.setItem('current_user', JSON.stringify(user));
+    this.currentUser.set(user);
+    localStorage.setItem('current-user', JSON.stringify(user));
   }
   
   signup(role: 'USER' | 'VENUE_OWNER', signupForm: FormGroup): Observable<any> {
