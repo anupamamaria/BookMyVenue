@@ -38,10 +38,10 @@
 
     <div class="form-field">
       <label for="signup-phone">Phone Number</label>
-      <input type="tel" id="signup-phone" formControlName="phone" placeholder="1234567890" />
-      <div class="field-error" *ngIf="signupForm.get('phone')?.touched && signupForm.get('phone')?.invalid">
-        <small *ngIf="signupForm.get('phone')?.errors?.['required']">Phone number is required.</small>
-        <small *ngIf="signupForm.get('phone')?.errors?.['pattern']">Enter a valid 10-digit number.</small>
+      <input type="tel" id="signup-phone" formControlName="mobile" placeholder="1234567890" />
+      <div class="field-error" *ngIf="signupForm.get('mobile')?.touched && signupForm.get('mobile')?.invalid">
+        <small *ngIf="signupForm.get('mobile')?.errors?.['required']">Phone number is required.</small>
+        <small *ngIf="signupForm.get('mobile')?.errors?.['pattern']">Enter a valid 10-digit number.</small>
       </div>
     </div>
 
