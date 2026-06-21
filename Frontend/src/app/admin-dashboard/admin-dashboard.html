@@ -1,0 +1,129 @@
+<app-navbar></app-navbar>
+
+<section class="admin-dashboard">
+  <header class="admin-header">
+    <div>
+      <h1>Venue Review Console</h1>
+      <p>Review and manage venue listings from one place.</p>
+    </div>
+
+    <div class="overview-stats">
+      <div class="stat-chip pending">
+        <span class="label">Pending</span>
+        <span class="value">{{ pendingVenues.length }}</span>
+      </div>
+      <div class="stat-chip approved">
+        <span class="label">Approved</span>
+        <span class="value">{{ approvedVenues.length }}</span>
+      </div>
+      <div class="stat-chip rejected">
+        <span class="label">Rejected</span>
+        <span class="value">{{ rejectedVenues.length }}</span>
+      </div>
+    </div>
+  </header>
+
+  <mat-tab-group class="tabs admin-tabs">
+    <mat-tab label="Pending Approvals">
+      <div class="cards-shell" *ngIf="pendingVenues.length > 0; else pendingEmpty">
+        <div class="venue-grid">
+          <article class="venue-card" *ngFor="let venue of pendingVenues">
+            <div class="image-wrapper">
+              <img *ngIf="venue.imageUrl; else pendingNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
+              <ng-template #pendingNoImage>
+                <div class="venue-image venue-image--placeholder">No Image</div>
+              </ng-template>
+              <span class="status-badge pending">Pending</span>
+            </div>
+
+            <div class="card-content">
+              <h3>{{ venue.name }}</h3>
+              <p class="owner">Owner: {{ venue.userName }}</p>
+
+              <div class="info-row">
+                <span class="info-pill">Id {{ venue.id }}</span>
+                <span class="info-pill">{{ venue.capacity }} capacity</span>
+              </div>
+
+              <p class="location">{{ venue.location }}</p>
+
+              <div class="action-buttons">
+                <button mat-stroked-button color="primary" class="action-btn" (click)="approve(venue)">
+                  Approve
+                </button>
+                <button mat-stroked-button color="warn" class="action-btn" (click)="reject(venue)">
+                  Reject
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+      <ng-template #pendingEmpty>
+        <p class="empty-state">No venues waiting for approval.</p>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Approved Venues">
+      <div class="cards-shell" *ngIf="approvedVenues.length > 0; else approvedEmpty">
+        <div class="venue-grid">
+          <article class="venue-card" *ngFor="let venue of approvedVenues">
+            <div class="image-wrapper">
+              <img *ngIf="venue.imageUrl; else approvedNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
+              <ng-template #approvedNoImage>
+                <div class="venue-image venue-image--placeholder">No Image</div>
+              </ng-template>
+              <span class="status-badge approved">Approved</span>
+            </div>
+
+            <div class="card-content">
+              <h3>{{ venue.name }}</h3>
+              <p class="owner">Owner: {{ venue.userName }}</p>
+
+              <div class="info-row">
+                <span class="info-pill">Id {{ venue.id }}</span>
+                <span class="info-pill">{{ venue.capacity }} capacity</span>
+              </div>
+
+              <p class="location">{{ venue.location }}</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <ng-template #approvedEmpty>
+        <p class="empty-state">No approved venues yet.</p>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Rejected Venues">
+      <div class="cards-shell" *ngIf="rejectedVenues.length > 0; else rejectedEmpty">
+        <div class="venue-grid">
+          <article class="venue-card" *ngFor="let venue of rejectedVenues">
+            <div class="image-wrapper">
+              <img *ngIf="venue.imageUrl; else rejectedNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
+              <ng-template #rejectedNoImage>
+                <div class="venue-image venue-image--placeholder">No Image</div>
+              </ng-template>
+              <span class="status-badge rejected">Rejected</span>
+            </div>
+
+            <div class="card-content">
+              <h3>{{ venue.name }}</h3>
+              <p class="owner">Owner: {{ venue.userName }}</p>
+
+              <div class="info-row">
+                <span class="info-pill">Id {{ venue.id }}</span>
+                <span class="info-pill">{{ venue.capacity }} capacity</span>
+              </div>
+
+              <p class="location">{{ venue.location }}</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <ng-template #rejectedEmpty>
+        <p class="empty-state">No rejected venues yet.</p>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+</section>

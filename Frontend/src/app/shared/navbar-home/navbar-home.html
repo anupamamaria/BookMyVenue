@@ -1,0 +1,96 @@
+<nav class="home-nav">
+  <!-- Logo -->
+  <a routerLink="/" class="nav-logo">
+    <span class="material-symbols-outlined home-icon">home</span>
+    <span class="logo-text">BookMyVenue</span>
+  </a>
+
+  <!-- Search Bar -->
+  <div class="nav-search">
+    <div class="search-bar-interactive">
+      <div class="search-field-wrapper">
+        <label><strong>Where</strong></label>
+        <input type="text" [(ngModel)]="search.searchLocation" placeholder="Search location" class="search-input" />
+      </div>
+      <div class="search-field-divider"></div>
+      <div class="search-field-wrapper">
+        <label><strong>Venue</strong></label>
+        <input type="text" [(ngModel)]="search.searchTerm" placeholder="Search venues" class="search-input" />
+      </div>
+      <div class="search-field-divider"></div>
+      <div class="search-field-wrapper">
+        <label><strong>Guests</strong></label>
+        <input type="number" [(ngModel)]="search.searchGuests" placeholder="Add guests" class="search-input" min="0" />
+      </div>
+      <button class="search-icon-btn" (click)="search.performSearch()">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </div>
+    <div class="search-actions">
+      <button class="filter-toggle-btn" (click)="search.toggleFilters()">
+        <span class="material-symbols-outlined">tune</span>
+        Filters
+      </button>
+      <button class="clear-btn" *ngIf="search.isSearchActive$ | async" (click)="search.clearSearch()">
+        <span class="material-symbols-outlined">close</span>
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Avatar -->
+  <div class="nav-user">
+    <button class="user-menu-btn" [class.is-logged-in]="isLoggedIn" (click)="toggleUserMenu()">
+      <ng-container *ngIf="!isLoggedIn">
+        <span class="material-symbols-outlined" style="font-size:20px;color:#717171">menu</span>
+        <span class="material-symbols-outlined user-icon-logged-out">person</span>
+      </ng-container>
+      <ng-container *ngIf="isLoggedIn && currentUser">
+        <div class="avatar-circle" [style.background]="avatarColor">{{ userInitials }}</div>
+      </ng-container>
+    </button>
+    <div class="user-dropdown" *ngIf="showUserMenu">
+      <div class="dropdown-identity" *ngIf="isLoggedIn && currentUser">
+        <div class="avatar-circle avatar-circle--lg" [style.background]="avatarColor">{{ userInitials }}</div>
+        <div>
+          <p class="identity-name">{{ currentUser.name }}</p>
+          <p class="identity-email">{{ currentUser.email }}</p>
+        </div>
+      </div>
+      <hr class="dropdown-divider" *ngIf="isLoggedIn" />
+      <ng-container *ngIf="!isLoggedIn">
+        <a class="dropdown-item" (click)="openLoginDialog()"><strong>Log in or Signup</strong></a>
+      </ng-container>
+      <ng-container *ngIf="isLoggedIn">
+        <a class="dropdown-item" (click)="openProfileDialog()">
+          <span class="material-symbols-outlined">person</span>My Profile
+        </a>
+        <a routerLink="/bookings" class="dropdown-item" (click)="showUserMenu = false">
+          <span class="material-symbols-outlined">calendar_month</span>My Bookings
+        </a>
+        <hr class="dropdown-divider" />
+        <a class="dropdown-item" (click)="logout()">
+          <span class="material-symbols-outlined">logout</span>Log out
+        </a>
+      </ng-container>
+    </div>
+  </div>
+</nav>
+
+<!-- Amenity Filters (slides out below nav) -->
+<div class="filters-panel" *ngIf="search.showFilters">
+  <div class="filters-container">
+    <h3 class="filters-title">Filter by Amenities</h3>
+    <div class="amenity-filters">
+      <mat-checkbox [(ngModel)]="search.filterSwimmingPool" (change)="search.onFilterChange()" class="amenity-checkbox">
+        <span class="material-symbols-outlined amenity-icon">pool</span> Swimming Pool
+      </mat-checkbox>
+      <mat-checkbox [(ngModel)]="search.filterOutsideCatering" (change)="search.onFilterChange()" class="amenity-checkbox">
+        <span class="material-symbols-outlined amenity-icon">restaurant</span> Outside Catering Allowed
+      </mat-checkbox>
+      <mat-checkbox [(ngModel)]="search.filterCarParking" (change)="search.onFilterChange()" class="amenity-checkbox">
+        <span class="material-symbols-outlined amenity-icon">local_parking</span> Car Parking
+      </mat-checkbox>
+    </div>
+  </div>
+</div>

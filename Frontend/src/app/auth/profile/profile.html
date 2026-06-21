@@ -1,0 +1,61 @@
+<div class="profile-modal">
+  <div class="modal-header">
+    <h2 class="modal-title">My Profile</h2>
+    <button class="close-btn" (click)="onCancel()" aria-label="Close">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <div class="modal-body">
+    <form #profileForm="ngForm">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          [(ngModel)]="user.name"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="user.email"
+          class="form-control"
+          readonly
+          disabled
+        />
+        <small class="form-hint">Email cannot be changed</small>
+      </div>
+
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input
+          type="text"
+          id="location"
+          name="location"
+          [(ngModel)]="user.location"
+          class="form-control"
+          placeholder="e.g., Kerala, India"
+        />
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    <button 
+      class="btn btn-primary" 
+      (click)="onSave()"
+      [disabled]="!profileForm.form.valid"
+    >
+      Save Changes
+    </button>
+  </div>
+</div>

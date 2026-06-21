@@ -1,0 +1,951 @@
+
+
+.venue-create-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 40px 60px;
+  min-height: 100vh;
+}
+
+
+.page-header {
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #222;
+    margin: 0 0 8px;
+  }
+
+  p {
+    margin: 0;
+    color: #717171;
+    font-size: 16px;
+  }
+}
+
+.venue-stepper {
+  background: transparent;
+  padding: 0;
+
+  // Stepper header container styling (uses class specificity)
+  .mat-horizontal-stepper-header-container {
+    margin-bottom: 32px;
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  // Step header styling (direct child selector)
+  .mat-step-header {
+    padding: 12px 24px;
+    border-radius: 12px;
+
+    &:hover {
+      background-color: #f7f7f7;
+    }
+
+    &.cdk-keyboard-focused,
+    &.cdk-program-focused {
+      background-color: transparent;
+    }
+  }
+
+  // Selected step styling
+  .mat-step-header.mat-step-header-selected {
+    background-color: #fff5f7;
+
+    .mat-step-label {
+      font-weight: 600;
+    }
+  }
+
+  // Content container
+  .mat-horizontal-content-container {
+    padding: 0;
+  }
+}
+
+.step-content {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 8px;
+}
+
+.step-subtitle {
+  font-size: 14px;
+  color: #717171;
+  margin: 0 0 32px;
+}
+
+// ==========================================
+// FORM SECTIONS
+// ==========================================
+
+.basic-details-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.basic-form-field {
+  width: 100%;
+  max-width: 400px;
+
+  // Direct mat-form-field targeting
+  mat-form-field,
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
+
+.description-field {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 8px;
+
+  // Direct textarea targeting
+  textarea,
+  .mat-mdc-text-field-wrapper textarea {
+    min-height: 100px;
+  }
+}
+
+// ==========================================
+// AMENITIES
+// ==========================================
+
+.amenities-section {
+  margin-top: 8px;
+
+  .section-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 16px;
+  }
+}
+
+.amenities-grid {
+  // Checkbox styling using direct selectors and tokens
+  mat-checkbox,
+  .mat-mdc-checkbox {
+    .mdc-form-field,
+    .mdc-label {
+      color: #484848;
+      font-size: 14px;
+    }
+  }
+}
+
+// ==========================================
+// SLOT FORM
+// ==========================================
+
+.slot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.form-group {
+  .section-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 12px;
+  }
+}
+
+.radio-group {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+
+  // Radio button styling using direct selectors and tokens
+  mat-radio-button,
+  .mat-mdc-radio-button {
+    .mdc-form-field,
+    .mdc-label {
+      color: #484848 !important;
+      font-size: 14px;
+    }
+  }
+}
+
+.radio-group-horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.date-field {
+  max-width: 250px;
+}
+
+.date-range-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.date-item {
+  flex: 0 0 200px;
+
+  .date-field {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.slot-add-section {
+  background: #f7f7f7;
+  border: 1px solid #ebebeb;
+  border-radius: 12px;
+  padding: 24px;
+
+  .section-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 16px;
+  }
+}
+
+.slot-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.time-field {
+  flex: 1;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.price-field {
+  flex: 1;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.apply-dates-section {
+  background: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 20px;
+
+  .apply-checkbox {
+    // Direct checkbox label styling
+    .mdc-form-field,
+    .mdc-label,
+    label {
+      font-weight: 500;
+      color: #222;
+    }
+  }
+}
+
+.date-options {
+  margin-top: 16px;
+  padding-left: 8px;
+}
+
+.date-range-options {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #ebebeb;
+}
+
+.section-label-small {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 10px;
+}
+
+.days-checkboxes {
+  margin-top: 16px;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.calendar-picker {
+  margin-top: 16px;
+}
+
+.calendar-field {
+  width: 100%;
+  max-width: 250px;
+
+  input {
+    cursor: pointer;
+  }
+
+  .calendar-toggle-btn {
+    padding-right: 5px;
+    
+    mat-icon {
+      color: rgba(0, 0, 0, 0.54);
+    }
+
+    &:hover {
+      mat-icon {
+        color: rgba(0, 0, 0, 0.87);
+      }
+    }
+  }
+}
+
+.selected-dates-chips {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+
+  .chips-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 12px;
+  }
+
+  .dates-chip-set {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .date-chip {
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255, 56, 92, 0.85) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 16px !important;
+    padding: 8px 12px !important;
+    height: auto !important;
+    min-height: 32px;
+    flex-shrink: 0;
+    
+    // Remove default Material chip styling
+    &::before {
+      display: none !important;
+    }
+
+    // Chip label text
+    .mdc-evolution-chip__text-label,
+    .mat-mdc-chip-action-label {
+      color: white !important;
+      font-weight: 500;
+    }
+    
+    button[matChipRemove] {
+      opacity: 0.85;
+      transition: opacity 0.2s;
+      background: transparent !important;
+      border: none !important;
+      
+      &:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: white !important;
+      }
+    }
+
+    // Override Material 3 chip container styles
+    .mdc-evolution-chip__cell,
+    .mdc-evolution-chip__action {
+      color: white !important;
+    }
+
+    .mat-mdc-chip-remove {
+      color: white !important;
+      opacity: 0.85;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.btn-add-slot {
+  align-self: flex-start;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  background-color: #e61e4d !important;
+  color: #fff !important;
+  border: none;
+  border-radius: 8px;
+  transition: opacity 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background-color:  rgba(230, 30, 77, 0.5);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  // Direct icon styling
+  mat-icon,
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.step-actions {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #ebebeb;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  background-color:  #e61e4d !important;
+  color: #fff !important;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(230, 30, 77, 0.2);
+  transition: opacity 0.2s, transform 0.1s;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background-color:  rgba(230, 30, 77, 0.5);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-back {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #222;
+  background-color: transparent !important;
+  border: 1px solid #222;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+
+.slots-list {
+  margin-top: 32px;
+
+  .section-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 16px;
+  }
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+.slot-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.2s;
+  position: relative;
+  min-height: 140px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    border-color: #ff385c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.slot-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .slot-date {
+    font-size: 13px;
+    font-weight: 600;
+    color: #222;
+    line-height: 1.2;
+  }
+
+  .slot-time {
+    font-size: 13px;
+    color: #717171;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #999;
+    }
+  }
+
+  .slot-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff385c;
+    margin-top: 4px;
+  }
+
+  .slot-meta {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid #f0f0f0;
+  }
+}
+
+.slot-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.icon-btn-edit {
+  color: #00a699;
+  transition: background-color 0.2s;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  &:hover {
+    background-color: rgba(0, 166, 153, 0.1);
+  }
+
+  // Direct icon styling
+  mat-icon,
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.icon-btn-delete {
+  color: #ff385c;
+  transition: background-color 0.2s;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  &:hover {
+    background-color: rgba(255, 56, 92, 0.1);
+  }
+
+  // Direct icon styling
+  mat-icon,
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ==========================================
+// CALENDAR CUSTOMIZATION
+// Calendar renders in CDK overlay (outside component shadow DOM).
+// ::ng-deep is required to pierce view encapsulation for overlay elements.
+// ==========================================
+
+::ng-deep .calendar-menu {
+  // Remove all mat-menu size constraints so the calendar fits fully
+  &.mat-mdc-menu-panel {
+    max-width: none !important;
+    min-width: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .mat-mdc-menu-content {
+    padding: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+::ng-deep .calendar-menu .calendar-wrapper {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12);
+  overflow: hidden;
+
+  .mat-calendar {
+    font-family: inherit;
+    width: 310px;
+    height: auto;
+  }
+
+  // Calendar header
+  .mat-calendar-header {
+    padding: 8px 8px 0 8px;
+    background: #f5f5f5;
+  }
+
+  // Calendar period button
+  .mat-calendar-period-button {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  // Navigation arrows
+  .mat-calendar-previous-button,
+  .mat-calendar-next-button {
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  // Calendar body
+  .mat-calendar-content {
+    padding: 8px;
+  }
+
+  // Today's date styling
+  .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+    border-color: #ff385c;
+    border-width: 1px;
+  }
+
+  // Regular cell hover
+  .mat-calendar-body-cell:not(.mat-calendar-body-disabled):hover
+    .mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+    background-color: rgba(255, 56, 92, 0.1);
+  }
+
+  // Selected date styling
+  .mat-calendar-body-cell.selected .mat-calendar-body-cell-content,
+  .mat-calendar-body-selected {
+    background-color: #ff385c !important;
+    color: #fff !important;
+  }
+}
+
+// ==========================================
+// MATERIAL COMPONENT OVERRIDES
+// Using direct selectors and tokens
+// ==========================================
+
+// Text field wrapper
+.mat-mdc-text-field-wrapper {
+  background-color: #fff;
+}
+
+// Focus overlay
+.mat-mdc-form-field-focus-overlay {
+  background-color: transparent;
+}
+
+// Outlined text field states (handled via tokens at :host level)
+// These provide fallback support for specific states
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) {
+  &:hover .mdc-notched-outline {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--mdc-outlined-text-field-hover-outline-color);
+    }
+  }
+
+  &.mdc-text-field--focused .mdc-notched-outline {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--mdc-outlined-text-field-focus-outline-color);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .venue-create-container {
+    padding: 16px 20px 40px;
+  }
+
+  .step-content {
+    padding: 24px 20px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .slot-row {
+    flex-direction: column;
+
+    .time-field,
+    .price-field {
+      max-width: 100%;
+    }
+  }
+
+  .slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    max-height: 300px;
+  }
+
+  .step-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .amenities-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .days-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// ==========================================
+// IMAGE UPLOAD
+// ==========================================
+
+.image-upload-section {
+  margin-top: 8px;
+
+  .section-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 14px;
+  }
+}
+
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 600px;
+  padding: 36px 24px;
+  border: 2px dashed #d8d8d8;
+  border-radius: 14px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+
+  &:hover,
+  &.drag-over {
+    border-color: #e61e4d;
+    background: #fff5f7;
+
+    .upload-icon {
+      color: #e61e4d;
+    }
+  }
+
+  &.drag-over {
+    box-shadow: 0 0 0 3px rgba(230, 30, 77, 0.12);
+  }
+}
+
+.upload-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: #bbb;
+  transition: color 0.2s;
+}
+
+.drop-label {
+  font-size: 15px;
+  color: #444;
+  margin: 0;
+
+  .drop-link {
+    color: #e61e4d;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+}
+
+.drop-hint {
+  font-size: 12px;
+  color: #aaa;
+  margin: 0;
+}
+
+// Preview grid
+.image-preview-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  max-width: 600px;
+}
+
+.preview-item {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+
+  &:hover .preview-delete-btn {
+    opacity: 1;
+  }
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.preview-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.18s, background 0.18s;
+
+  &:hover {
+    background: #e61e4d;
+    opacity: 1;
+  }
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    line-height: 15px;
+  }
+}
+
+.preview-badge {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  background:  #e61e4d;
+  color: #fff;
+  border-radius: 8px;
+  padding: 2px 7px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  pointer-events: none;
+}

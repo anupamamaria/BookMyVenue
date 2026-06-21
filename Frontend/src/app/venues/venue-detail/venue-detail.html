@@ -1,0 +1,241 @@
+<div class="venue-detail-page" *ngIf="venue; else loading">
+
+  <!-- Back nav -->
+  <nav class="detail-nav">
+    <a routerLink="/" class="back-link">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Back to venues</span>
+    </a>
+  </nav>
+
+  <!-- Hero Image -->
+  <div class="detail-hero">
+    <img [src]="heroImages[heroIndex]" [alt]="venue.name" class="detail-image" />
+    <div class="hero-overlay"></div>
+
+    <!-- Prev button -->
+    <button class="hero-nav hero-nav--prev"
+            *ngIf="heroImages.length > 1"
+            type="button"
+            (click)="heroPrev()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <!-- Next button -->
+    <button class="hero-nav hero-nav--next"
+            *ngIf="heroImages.length > 1"
+            type="button"
+            (click)="heroNext()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+
+    <!-- Dot indicators -->
+    <div class="hero-dots" *ngIf="heroImages.length > 1">
+      <span class="hero-dot"
+            *ngFor="let img of heroImages; let i = index"
+            [class.hero-dot--active]="i === heroIndex"
+            (click)="heroIndex = i">
+      </span>
+    </div>
+
+    <!-- Counter -->
+    <span class="hero-counter" *ngIf="heroImages.length > 1">
+      {{ heroIndex + 1 }} / {{ heroImages.length }}
+    </span>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="detail-body">
+
+    <!-- LEFT: Info + Slot Selection -->
+    <div class="detail-main">
+
+      <!-- Venue header -->
+      <div class="venue-header-block">
+        <div class="venue-title-row">
+          <h1 class="detail-name">{{ venue.name }}</h1>
+          <div class="venue-rating">
+            <mat-icon class="star-icon">star</mat-icon>
+            <span class="rating-value">{{ venue.rating }}</span>
+          </div>
+        </div>
+        <p class="detail-location">
+          <mat-icon class="loc-icon">location_on</mat-icon>
+          {{ venue.location }}
+        </p>
+        <p class="detail-capacity">
+          <mat-icon class="cap-icon">groups</mat-icon>
+          Up to <strong>{{ venue.capacity }}</strong> guests
+        </p>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- Description -->
+      <div class="venue-desc-block">
+        <h2 class="block-title">About this venue</h2>
+        <p class="detail-desc">{{ venue.description }}</p>
+      </div>
+
+      <!-- Amenities -->
+      <div class="venue-amenities-block" *ngIf="amenityList.length > 0">
+        <div class="amenities-grid">
+          <div class="amenity-item" *ngFor="let a of amenityList">
+            <mat-icon class="amenity-icon">{{ a.icon }}</mat-icon>
+            <span>{{ a.label }}</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+
+      <!-- ── Date Range & Slot Selection ── -->
+      <div class="slot-selection-block">
+        <h2 class="block-title">Select Dates &amp; Time Slot</h2>
+
+        <!-- Date Range Pickers -->
+        <div class="date-range-row">
+          <div class="date-picker-col">
+            <mat-form-field appearance="outline" class="date-picker-field">
+              <mat-label>Start Date</mat-label>
+              <input matInput [matDatepicker]="startPicker" [min]="today"
+                     [value]="startDate" (dateChange)="onStartDateChange($event.value)"
+                     placeholder="Select date" readonly />
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <div class="date-picker-col">
+            <mat-form-field appearance="outline" class="date-picker-field">
+              <mat-label>End Date</mat-label>
+              <input matInput [matDatepicker]="endPicker" [min]="endDateMin"
+                     [value]="endDate" (dateChange)="onEndDateChange($event.value)"
+                     placeholder="Select date" readonly />
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Prompt when dates not yet fully selected -->
+        <div class="date-prompt" *ngIf="!startDate || !endDate">
+          <mat-icon>date_range</mat-icon>
+          <p>Select your event dates above to view available time slots</p>
+        </div>
+
+        <!-- Slot Groups -->
+        <div class="slots-container" *ngIf="startDate && endDate">
+          <div class="slots-loading" *ngIf="slotsLoading">
+            <mat-spinner diameter="32"></mat-spinner>
+          </div>
+
+          <ng-container *ngIf="!slotsLoading">
+            <ng-container *ngIf="slotGroups.length > 0; else noSlots">
+              <div class="slot-group" *ngFor="let group of slotGroups">
+                <div class="slot-group-header" [class.multiday-header]="group.isMultiDay">
+                  <mat-icon class="group-icon" *ngIf="group.isMultiDay">card_giftcard</mat-icon>
+                  <mat-icon class="group-icon" *ngIf="!group.isMultiDay">calendar_today</mat-icon>
+                  <span class="group-label">{{ group.label }}</span>
+                </div>
+                <div class="slots-grid">
+                  <button
+                    class="slot-chip"
+                    *ngFor="let slot of group.slots"
+                    [class.selected]="selectedSlot?.id === slot.id"
+                    [class.booked]="!slot.available"
+                    [class.multiday-chip]="slot.slotType === 'multiday'"
+                    [disabled]="!slot.available"
+                    (click)="selectSlot(slot)"
+                  >
+                    <ng-container *ngIf="slot.slotType === 'multiday'">
+                      <div class="pkg-badge">{{ slot.durationDays }}-Day Package</div>
+                      <div class="pkg-date-range">{{ formatSlotDateRange(slot) }}</div>
+                    </ng-container>
+
+                    <div class="slot-time-range">
+                      <span class="slot-time-from">{{ formatTime(slot.startTime) }}</span>
+                      <span class="slot-dash">—</span>
+                      <span class="slot-time-to">{{ formatTime(slot.endTime) }}</span>
+                    </div>
+                    <div class="slot-price">{{ slot.price | currency:'INR':'symbol':'1.0-0' }}</div>
+                    <div class="slot-status">
+                      <span class="status-dot" [class.available]="slot.available" [class.unavailable]="!slot.available"></span>
+                      <span>{{ slot.available ? 'Available' : 'Booked' }}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #noSlots>
+              <p class="no-slots-msg">No slots available for the selected dates.</p>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Booking Card (sticky) -->
+    <aside class="detail-booking-card">
+      <div class="card-rating">
+        <mat-icon class="star-icon-sm">star</mat-icon>
+        <span>{{ venue.rating }}</span>
+        <span class="rating-sep">·</span>
+        <mat-icon class="star-icon-sm">group</mat-icon>
+        <span class="capacity-label">{{ venue.capacity }} guests max</span>
+      </div>
+
+      <hr class="card-divider" />
+
+      <!-- Selection Summary -->
+      <div class="card-summary">
+        <div class="summary-row" *ngIf="startDate; else noDate">
+          <mat-icon class="summary-icon">date_range</mat-icon>
+          <div>
+            <p class="summary-label">{{ selectedSlot ? 'Date' : 'Search Range' }}</p>
+            <p class="summary-value">{{ selectedSlotDateLabel }}</p>
+          </div>
+        </div>
+        <ng-template #noDate>
+          <p class="summary-hint">
+            <mat-icon>date_range</mat-icon>
+            Select dates to start
+          </p>
+        </ng-template>
+
+        <div class="summary-row" *ngIf="selectedSlot; else noSlot">
+          <mat-icon class="summary-icon">schedule</mat-icon>
+          <div>
+            <p class="summary-label">{{ selectedSlot.slotType === 'multiday' ? 'Package' : 'Time Slot' }}</p>
+            <p class="summary-value">{{ formatTime(selectedSlot.startTime) }} — {{ formatTime(selectedSlot.endTime) }}</p>
+            <p class="summary-days" *ngIf="selectedSlot.durationDays">{{ selectedSlot.durationDays }}-day package</p>
+          </div>
+          <span class="summary-slot-price">{{ selectedSlot.price | currency:'INR':'symbol':'1.0-0' }}</span>
+        </div>
+        <ng-template #noSlot>
+          <p class="summary-hint">
+            <mat-icon>schedule</mat-icon>
+            Select a time slot
+          </p>
+        </ng-template>
+      </div>
+
+      <button
+        class="btn-book"
+        [disabled]="!selectedSlot"
+        (click)="onBook()"
+      >
+        {{ selectedSlot ? 'Book this Slot' : 'Select a slot to book' }}
+      </button>
+
+      <p class="no-charge-note">You won't be charged yet</p>
+    </aside>
+
+  </div>
+</div>
+
+<ng-template #loading>
+  <div class="page-loading">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+</ng-template>
