@@ -24,8 +24,8 @@
       </div>
     </div>
 
-    <button type="submit" class="dialog-btn" [disabled]="loginForm.invalid || loading">
-      {{ loading ? 'Signing in...' : 'Sign In' }}
+    <button type="submit" class="dialog-btn" [disabled]="loginForm.invalid || loading()">
+      {{ loading() ? 'Signing in...' : 'Sign In' }}
     </button>
   </form>
 

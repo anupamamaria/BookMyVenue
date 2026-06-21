@@ -70,7 +70,7 @@
       </div>
     </div>
 
-    <button type="submit" class="dialog-btn" [disabled]="signupForm.invalid || passwordMismatch || loading">
+    <button type="submit" class="dialog-btn" [disabled]="signupForm.invalid || passwordMismatch || loading()">
       Sign Up
     </button>
   </form>
