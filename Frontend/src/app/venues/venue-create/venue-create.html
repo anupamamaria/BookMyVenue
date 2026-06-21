@@ -1,3 +1,8 @@
+<app-loader
+  *ngIf="loading()"
+  message="Creating your venue...">
+</app-loader>
+
 <div class="venue-create-container">
   <header class="page-header">
     <div>
@@ -94,8 +99,8 @@
             </div>
 
             <!-- Preview Grid -->
-            <div class="image-preview-grid" *ngIf="venueImages.length > 0">
-              <div class="preview-item" *ngFor="let img of venueImages; let i = index">
+            <div class="image-preview-grid" *ngIf="venueImages().length > 0">
+              <div class="preview-item" *ngFor="let img of venueImages(); let i = index">
                 <img [src]="img.dataUrl" [alt]="img.file.name" class="preview-img" />
                 <button class="preview-delete-btn" type="button" (click)="removeImage(i)" title="Remove">
                   <mat-icon>close</mat-icon>
@@ -129,8 +134,8 @@
           <div class="form-group">
             <label class="section-label">Booking Type</label>
             <mat-radio-group formControlName="slotType" class="radio-group">
-              <mat-radio-button value="fixed">Fixed Time Slots</mat-radio-button>
-              <mat-radio-button value="flexible">Flexible Duration</mat-radio-button>
+              <mat-radio-button value="FIXED">Fixed Time Slots</mat-radio-button>
+              <mat-radio-button value="FLEXIBLE">Flexible Duration</mat-radio-button>
             </mat-radio-group>
           </div>
 

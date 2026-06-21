@@ -197,7 +197,7 @@ export class VenueDetail  implements OnInit {
 
   onBook(): void {
     if (!this.selectedSlot) return;
-    if (!this.authService.isLoggedIn) {
+    if (!this.authService.loggedIn()) {
       const dialogRef = this.dialog.open(Login, { width: '420px', panelClass: 'auth-dialog' });
       dialogRef.afterClosed().subscribe(result => {
         if (result === true) this.router.navigate(['/payment', this.venue?.id]);

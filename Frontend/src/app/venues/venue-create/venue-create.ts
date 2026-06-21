@@ -17,6 +17,9 @@ import { MatSnackBarModule, MatSnackBarHorizontalPosition, MatSnackBarVerticalPo
 import { VenueService } from '../venueservice';
 import { forkJoin, switchMap } from 'rxjs';
 import { MatTimepickerModule } from '@angular/material/timepicker';
+import { signal } from '@angular/core';
+import { Loader } from '../../shared/loader/loader';
+import { Router } from '@angular/router';
 
 export interface ImagePreview {
   file: File;
@@ -28,7 +31,7 @@ export interface ImagePreview {
   imports: [CommonModule, ReactiveFormsModule, MatStepperModule, MatCheckboxModule,
             MatInputModule, MatButtonModule, MatIconModule, MatRadioModule, MatSelectModule,
             MatCardModule, MatDatepickerModule, MatNativeDateModule, MatMenuModule,
-            MatChipsModule, MatSnackBarModule, MatTimepickerModule],
+            MatChipsModule, MatSnackBarModule, MatTimepickerModule, Loader],
   providers: [provideNativeDateAdapter()],
   templateUrl: './venue-create.html',
   styleUrl: './venue-create.scss',
@@ -44,13 +47,14 @@ export class VenueCreate  implements OnInit {
   days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   daysSelected: Date[] = [];
   minDate: Date = new Date();
-
-  venueImages: ImagePreview[] = [];
+  venueImages = signal<ImagePreview[]>([]);
   isDragOver = false;
   horizontalPosition: MatSnackBarHorizontalPosition = 'right';
   verticalPosition: MatSnackBarVerticalPosition = 'top';
+  loading = signal(false);
   
-  constructor(private fb: FormBuilder, private snackBar: MatSnackBar, private venueService: VenueService) {}
+  constructor(private fb: FormBuilder, private snackBar: MatSnackBar, 
+              private venueService: VenueService, private router: Router) {}
 
   ngOnInit(): void {
 
@@ -69,7 +73,7 @@ export class VenueCreate  implements OnInit {
     });
 
     this.slotManagementForm = this.fb.group({
-      slotType: ['fixed', Validators.required], 
+      slotType: ['FIXED', Validators.required], 
       startDate: [null, Validators.required],
       endDate: [null, Validators.required],
       slots: this.fb.array([]),
@@ -190,6 +194,7 @@ export class VenueCreate  implements OnInit {
   }
 
   onSubmit(): void {
+    this.loading.set(true);
     //Create payload to send to backend, including images and form data
     const basicVenueDetails = {
       name: this.basicDetailsForm.value.name,
@@ -206,18 +211,18 @@ export class VenueCreate  implements OnInit {
     
     this.venueService.createVenue(basicVenueDetails).pipe(
       switchMap((response: any) => {  
-        const venueId = response.id;
+        const venueId = response;
         const form = this.slotManagementForm.value;
-
+  
         const slot = form.slots[0]; // only one slot
         const slotRequest = {
           startDateTime: this.combineDateAndTime(form.startDate, slot.start),
           endDateTime: this.combineDateAndTime(form.endDate, slot.end),
           slotType: form.slotType,
-          minSlotTime: form.minSlotTime,
-          maxSlotTime: form.maxSlotTime,
-          bufferTime: form.bufferTime,
-          totalSlotPrice: form.totalSlotPrice
+          minSlotTime: slot.minSlotTime,
+          maxSlotTime: slot.maxSlotTime,
+          bufferTime: slot.bufferTime,
+          totalSlotPrice: slot.price
         };
         //create form data for images and slots
         return forkJoin({
@@ -228,17 +233,25 @@ export class VenueCreate  implements OnInit {
           ),
           images: this.venueService.uploadImages(
             venueId,
-            this.venueImages.map(img => img.file),
+            this.venueImages().map(img => img.file),
             0
           ),
         });
       })
     ).subscribe({
       next: (result) => {
+        console.log('forkJoin result', result);
         this.openSnackBar('Venue created successfully!');
+        this.loading.set(false);
+        //reroute to venue list page after short delay to show snackbar
+        setTimeout(() => {
+          this.router.navigate(['/venues']);
+        }, 2000);
       },
       error: (error) => {
+        console.log('Error creating venue', error);
         this.openSnackBar('Error creating venue. Please try again.');
+        this.loading.set(false);
       }
     });
   }
@@ -292,17 +305,28 @@ export class VenueCreate  implements OnInit {
 
   private processFiles(files: File[]): void {
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
     imageFiles.forEach(file => {
       const reader = new FileReader();
+
       reader.onload = (e) => {
-        this.venueImages.push({ file, dataUrl: e.target?.result as string });
+        this.venueImages.update(images => [
+          ...images,
+          {
+            file,
+            dataUrl: e.target?.result as string
+          }
+        ]);
       };
+
       reader.readAsDataURL(file);
     });
   }
 
   removeImage(index: number): void {
-    this.venueImages.splice(index, 1);
+    this.venueImages.update(images =>
+      images.filter((_, i) => i !== index)
+    );
   }
 
 

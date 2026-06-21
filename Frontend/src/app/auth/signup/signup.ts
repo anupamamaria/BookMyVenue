@@ -59,7 +59,7 @@ export class Signup {
       const response = await firstValueFrom(
         this.authService.signup(this.role, this.signupForm)
       );
-      if (response === 'User Registered Successfully')
+      if (response === 'user Registration Successful')
       {
         this.message = 'Signup successful! Please log in.';
         this.signupForm.reset();

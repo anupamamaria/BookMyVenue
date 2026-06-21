@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,21 +16,26 @@ import { Profile } from '../../auth/profile/profile';
 })
 export class Navbar implements OnInit {
   showUserMenu = false;
-  isLoggedIn = false;
-  currentUser: User | null = null;
 
   constructor(
     private authService: Authservice,
     private el: ElementRef,
     private dialog: MatDialog,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.authService.isLoggedIn$.subscribe(val => this.isLoggedIn = val);
-    this.authService.currentUser$.subscribe(user => this.currentUser = user);
   }
 
+  get isLoggedIn(): boolean {
+    return this.authService.loggedIn();
+  }
+
+  get currentUser(): User | null {
+    return this.authService.currentUser();
+  }
+  
   toggleUserMenu(): void { this.showUserMenu = !this.showUserMenu; }
 
   @HostListener('document:click', ['$event'])
@@ -50,13 +55,13 @@ export class Navbar implements OnInit {
   openLoginDialog(): void {
     this.showUserMenu = false;
     const ref = this.dialog.open(Login, { width: '420px', panelClass: 'auth-dialog' });
-    ref.afterClosed().subscribe(r => { if (r === 'signup') this.openSignupDialog(); });
+    ref.afterClosed().subscribe(result => { if (result?.action === 'signup') this.openSignupDialog(); });
   }
 
   openSignupDialog(): void {
     this.showUserMenu = false;
     const ref = this.dialog.open(Signup, { width: '480px', panelClass: 'auth-dialog' });
-    ref.afterClosed().subscribe(r => { if (r === 'login') this.openLoginDialog(); });
+    ref.afterClosed().subscribe(result => { if (result?.action === 'login') this.openLoginDialog(); });
   }
 
   openProfileDialog(): void {

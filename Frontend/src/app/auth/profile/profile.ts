@@ -26,7 +26,7 @@ export class Profile implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const currentUser = this.authService.currentUser;
+    const currentUser = this.authService.currentUser();
     if (currentUser) {
       this.user = { ...currentUser };
     }
