@@ -1,0 +1,134 @@
+.dialog-container {
+  padding: 32px;
+  position: relative;
+}
+
+.dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #717171;
+  cursor: pointer;
+  line-height: 1;
+
+  &:hover { color: #222; }
+}
+
+.dialog-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.dialog-subtitle {
+  font-size: 14px;
+  color: #717171;
+  margin-bottom: 20px;
+}
+
+.dialog-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.dialog-success {
+  background: #e8f5e9;
+  color: #4caf50;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.role-toggle {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  input[type="radio"] {
+    accent-color: #e61e4d;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.form-field {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+    margin-bottom: 6px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+
+    &:focus { border-color: #222; }
+  }
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.dialog-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(to right, #e61e4d, #e31c5f, #d70466);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity 0.2s;
+
+  &:hover:not(:disabled) { opacity: 0.9; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.dialog-switch {
+  text-align: center;
+  font-size: 14px;
+  color: #717171;
+  margin-top: 16px;
+  margin-bottom: 0;
+
+  a {
+    color: #222;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}

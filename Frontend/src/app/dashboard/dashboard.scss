@@ -1,0 +1,139 @@
+/* ─── Main Content ─── */
+.dashboard-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 40px;
+}
+
+.venue-section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+  margin-right: 10px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.scroll-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.scroll-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #222;
+  background: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, opacity 0.15s;
+
+  &:hover {
+    background: #f7f7f7;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.venue-carousel {
+  display: flex;
+  gap: 24px;
+  overflow-x: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card-slide {
+  flex: 0 0 calc((100% - 72px) / 4);
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.venue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* ─── Search Results ─── */
+.search-results-section {
+  .section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .results-count {
+    font-size: 16px;
+    font-weight: 400;
+    color: #717171;
+  }
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  .no-results-icon {
+    font-size: 64px;
+    color: #d0d0d0;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #222;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 14px;
+    color: #717171;
+    margin: 0;
+  }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .dashboard-nav {
+    padding: 10px 16px;
+  }
+
+  .nav-search {
+    display: none;
+  }
+
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  .card-slide {
+    flex: 0 0 calc((100% - 24px) / 2);
+  }
+
+  .venue-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+}
