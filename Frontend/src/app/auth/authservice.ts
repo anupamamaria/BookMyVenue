@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../shared/models/user';
 
@@ -23,7 +23,7 @@ export class Authservice {
       `${this.baseUrl}login`,
       { email, password }
     ).pipe(
-      tap(response => {
+      tap((response: any) => {
         localStorage.setItem('auth-token', response.token);
         localStorage.setItem('current-user', JSON.stringify(response));
 
