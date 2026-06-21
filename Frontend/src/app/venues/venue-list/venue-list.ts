@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { VenueAdmin } from '../../shared/models/venue';
 import { AdminDashboardService } from '../../admin-dashboard/admin-dashboardservice';
@@ -11,11 +11,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { Authservice } from '../../auth/authservice';
 import { Navbar } from '../../shared/navbar/navbar';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
   selector: 'app-venue-list',
   imports: [CommonModule, RouterModule, MatButtonModule, MatIconModule,
-            MatPaginatorModule, MatSelectModule, MatFormFieldModule, FormsModule, Navbar],
+            MatPaginatorModule, MatSelectModule, MatFormFieldModule, FormsModule, Navbar, Loader],
   templateUrl: './venue-list.html',
   styleUrl: './venue-list.scss',
 })
@@ -33,6 +34,7 @@ export class VenueList implements OnInit {
   filterType = '';
   filterStatus = '';
   filtersOpen = false;
+  loading = signal(false);
 
   locations: string[] = [];
   venueTypes = [
@@ -45,11 +47,19 @@ export class VenueList implements OnInit {
   constructor(private venueService: AdminDashboardService, private authService: Authservice) {}
 
   ngOnInit(): void {
+    this.loading.set(true);
     const userName = this.authService.currentUser?.name ?? 'user1';
-    this.venueService.getVenues(userName).subscribe(venues => {
-      this.allVenues = venues;
-      this.locations = [...new Set(venues.map(v => v.location))].sort();
-      this.applyFilters();
+    this.venueService.getVenues(userName).subscribe({
+      next: (venues) => {
+        this.allVenues = venues;
+        this.locations = [...new Set(venues.map(v => v.location))].sort();
+        this.applyFilters();
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error fetching venues:', error);
+        this.loading.set(false);
+      },
     });
   }
 

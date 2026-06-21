@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import { Venue, VenueManage, VenueManageSlot, VenueSlot } from '../shared/models/venue';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
@@ -376,12 +376,12 @@ export class VenueService {
   }
 
   createVenue(venueData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}venue`, venueData);
+    return this.http.post(`${this.baseUrl}venue`, venueData, { responseType: 'text' });
   }
 
   createSlot(venueId: number, slotData: any, dryRun: boolean): Observable<any> {
     const params = new HttpParams().set('dryRun', String(dryRun));
-    return this.http.post(`${this.baseUrl}venue/${venueId}/slots`, slotData, { params });
+    return this.http.post(`${this.baseUrl}venue/${venueId}/slot`, slotData, { params, responseType: 'text' });
   }
 
   uploadImages(venueId: number, images: File[], profileIndex: number): Observable<any> {
@@ -395,8 +395,9 @@ export class VenueService {
     formData.append('profileIndex', profileIndex.toString());
 
     return this.http.post(
-      `${this.baseUrl}venue/${venueId}/images`,
-      formData
+    `${this.baseUrl}venue/${venueId}/images`,
+    formData,
+    { responseType: 'text' }
     );
   }
 }
