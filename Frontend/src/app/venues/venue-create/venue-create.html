@@ -1,0 +1,325 @@
+<div class="venue-create-container">
+  <header class="page-header">
+    <div>
+      <h1>Create New Venue</h1>
+      <p>Set up your venue listing with availability and pricing</p>
+    </div>
+  </header>
+
+  <mat-horizontal-stepper [linear]="true" #stepper class="venue-stepper">
+    <!-- STEP 1: BASIC DETAILS -->
+    <mat-step [stepControl]="basicDetailsForm">
+      <ng-template matStepLabel>Basic Details</ng-template>
+
+      <div class="step-content">
+        <h2 class="step-title">Venue Information</h2>
+        <p class="step-subtitle">Provide basic details about your venue</p>
+
+        <form [formGroup]="basicDetailsForm" class="basic-details-form">
+
+          <!-- Venue Name -->
+          <mat-form-field appearance="outline" class="basic-form-field">
+            <mat-label>Venue Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <!-- Location -->
+          <mat-form-field appearance="outline" class="basic-form-field">
+            <mat-label>Location</mat-label>
+            <input matInput formControlName="location" />
+          </mat-form-field>
+
+          <!-- Address -->
+          <mat-form-field appearance="outline" class="basic-form-field">
+            <mat-label>Address</mat-label>
+            <input matInput formControlName="address" />
+          </mat-form-field>
+
+          <!-- Capacity -->
+          <mat-form-field appearance="outline" class="basic-form-field">
+            <mat-label>Capacity</mat-label>
+            <input matInput type="number" formControlName="capacity" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="basic-form-field">
+            <mat-label>Type of Venue</mat-label>
+            <mat-select formControlName="venueType">
+              <mat-option value="auditorium">Auditorium</mat-option>
+              <mat-option value="exhibitionHall">Exhibition Hall</mat-option>
+              <mat-option value="cafe">Cafe</mat-option>  
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Amenities -->
+          <div class="amenities-section">
+            <h3 class="section-label">Amenities</h3>
+            <div class="amenities-grid">
+              <mat-checkbox formControlName="swimmingPool">Swimming Pool</mat-checkbox>
+              <mat-checkbox formControlName="carParking">Car Parking</mat-checkbox>
+              <mat-checkbox formControlName="outsideCatering">Outside Catering Allowed</mat-checkbox>
+              <mat-checkbox formControlName="outsideServicesAllowed">Outside Services Allowed</mat-checkbox>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <mat-form-field appearance="outline" class="description-field">
+            <mat-label>Description / Rules</mat-label>
+            <textarea matInput rows="4" formControlName="description" placeholder="Tell guests about any additional rules.."></textarea>
+          </mat-form-field>
+
+          <!-- Venue Images -->
+          <div class="image-upload-section">
+            <h3 class="section-label">Venue Photos</h3>
+
+            <!-- Drop Zone -->
+            <div
+              class="drop-zone"
+              [class.drag-over]="isDragOver"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave()"
+              (drop)="onDrop($event)"
+              (click)="fileInput.click()"
+            >
+              <mat-icon class="upload-icon">add_photo_alternate</mat-icon>
+              <p class="drop-label">Drag &amp; drop photos here, or <span class="drop-link">browse</span></p>
+              <p class="drop-hint">PNG, JPG, WEBP up to 10MB each</p>
+              <input
+                #fileInput
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                (change)="onFilesSelected($event)"
+              />
+            </div>
+
+            <!-- Preview Grid -->
+            <div class="image-preview-grid" *ngIf="venueImages.length > 0">
+              <div class="preview-item" *ngFor="let img of venueImages; let i = index">
+                <img [src]="img.dataUrl" [alt]="img.file.name" class="preview-img" />
+                <button class="preview-delete-btn" type="button" (click)="removeImage(i)" title="Remove">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <span class="preview-badge" *ngIf="i === 0">Cover</span>
+              </div>
+            </div>
+          </div>
+
+        </form>
+
+        <div class="step-actions">
+          <button mat-raised-button class="btn-primary" (click)="stepper.next()" [disabled]="!basicDetailsForm.valid">
+            Continue
+          </button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- STEP 2: SLOT MANAGEMENT -->
+    <mat-step [stepControl]="slotManagementForm">
+      <ng-template matStepLabel>Availability & Pricing</ng-template>
+
+      <div class="step-content">
+        <h2 class="step-title">Set Your Availability</h2>
+        <p class="step-subtitle">Configure time slots and pricing for your venue</p>
+
+        <form [formGroup]="slotManagementForm" class="slot-form">
+
+          <!-- Slot Type -->
+          <div class="form-group">
+            <label class="section-label">Booking Type</label>
+            <mat-radio-group formControlName="slotType" class="radio-group">
+              <mat-radio-button value="fixed">Fixed Time Slots</mat-radio-button>
+              <mat-radio-button value="flexible">Flexible Duration</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          
+          <div class="form-group date-range-group">
+            <div class="date-item">
+              <mat-form-field appearance="outline" class="date-field">
+                <mat-label>Start Date</mat-label>
+                <input matInput [min]="minDate"[matDatepicker]="startPicker" formControlName="startDate">
+                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+              </mat-form-field>
+            </div>
+
+            <div class="date-item">
+              <mat-form-field appearance="outline" class="date-field">
+                <mat-label>End Date</mat-label>
+                <input matInput [min]="minDate" [matDatepicker]="endPicker" formControlName="endDate">
+                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                <mat-datepicker #endPicker></mat-datepicker>
+              </mat-form-field>
+            </div>
+          </div>
+
+
+          <!-- Add Slots -->
+          <div class="slot-add-section">
+            <h3 class="section-label">Add Time Slots</h3>
+
+            <div [formGroup]="slotAddForm" class="slot-row">
+              <mat-form-field appearance="outline" class="time-field">
+                  <mat-label>Start Time</mat-label>
+                  <input matInput formControlName="start" [matTimepicker]="startTimePicker">
+                  <mat-timepicker-toggle matIconSuffix [for]="startTimePicker">
+                  </mat-timepicker-toggle>
+                  <mat-timepicker #startTimePicker></mat-timepicker>
+              </mat-form-field>
+            
+              <mat-form-field appearance="outline" class="time-field">
+                <mat-label>End Time</mat-label>
+                <input matInput formControlName="end" [matTimepicker]="endTimePicker">
+                <mat-timepicker-toggle matIconSuffix [for]="endTimePicker">
+                </mat-timepicker-toggle>
+                <mat-timepicker #endTimePicker></mat-timepicker>
+              </mat-form-field>
+            
+              <mat-form-field appearance="outline" class="price-field">
+                <mat-label>Slot Price (₹)</mat-label>
+                <input matInput type="number" formControlName="price" placeholder="0" />
+              </mat-form-field>
+            </div>
+          
+            <!-- Flexible-only fields -->
+            <div [formGroup]="slotAddForm" *ngIf="slotManagementForm.get('slotType')?.value === 'flexible'" class="slot-row">
+              <mat-form-field appearance="outline" class="time-field">
+                <mat-label>Min Slot Time (mins)</mat-label>
+                <input matInput type="number" formControlName="minSlotTime" placeholder="30" />
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="time-field">
+                <mat-label>Max Slot Time (mins)</mat-label>
+                <input matInput type="number" formControlName="maxSlotTime" placeholder="60" />
+              </mat-form-field>
+            
+              <mat-form-field appearance="outline" class="price-field">
+                <mat-label>Min Slot Price (₹)</mat-label>
+                <input matInput type="number" formControlName="minSlotPrice" placeholder="0" />
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="buffer-field">
+                <mat-label>Buffer Time (mins)</mat-label>
+                <input matInput type="number" formControlName="bufferTime" placeholder="0" />
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Apply to Other Dates -->
+          <div class="apply-dates-section" *ngIf="multipleSlots">
+            <mat-checkbox formControlName="applyToOtherDates" class="apply-checkbox">
+              Apply this slot to multiple dates
+            </mat-checkbox>
+            
+            <div *ngIf="slotManagementForm.get('applyToOtherDates')?.value" class="date-options">
+              <mat-radio-group formControlName="applyMode" class="radio-group-horizontal">
+                <mat-radio-button value="selectedDates">Select specific dates</mat-radio-button>
+                <mat-radio-button value="dateRange">Apply to date range</mat-radio-button>
+              </mat-radio-group>
+
+              <!-- Date Range Options -->
+              <div *ngIf="slotManagementForm.get('applyMode')?.value === 'dateRange'" class="date-range-options">
+                <mat-form-field appearance="outline" class="date-field">
+                  <mat-label>End Date</mat-label>
+                  <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                  <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endPicker></mat-datepicker>
+                </mat-form-field>
+              
+                <div formArrayName="daysOfWeek" class="days-checkboxes">
+                  <label class="section-label-small">Include following days of the Week</label>
+                  <div class="days-grid">
+                    <mat-checkbox *ngFor="let day of days; let i = index" [formControlName]="i">
+                      {{ day }}
+                    </mat-checkbox>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Selected Dates Calendar -->
+              <div *ngIf="slotManagementForm.get('applyMode')?.value === 'selectedDates'" class="calendar-picker">
+                <mat-form-field appearance="outline" class="date-field calendar-field">
+                  <mat-label>Select Multiple Dates</mat-label>
+                  <input matInput [matMenuTriggerFor]="appMenu" #menuTrigger="matMenuTrigger" readonly 
+                         placeholder="Click to pick dates" 
+                         [value]="daysSelected.length ? daysSelected.length + ' date(s) selected' : 'No dates selected'">
+                  <button matSuffix mat-icon-button [matMenuTriggerFor]="appMenu" type="button" class="calendar-toggle-btn">
+                    <mat-icon>calendar_today</mat-icon>
+                  </button>
+                </mat-form-field>
+
+                <mat-menu #appMenu="matMenu" class="calendar-menu">
+                  <div (click)="$event.stopPropagation()" class="calendar-wrapper">
+                    <mat-calendar
+                      #calendar
+                      (selectedChange)="select($event, calendar)"
+                      [dateClass]="isSelected">
+                    </mat-calendar>
+                  </div>
+                </mat-menu>
+
+                <!-- Selected Dates Chips -->
+                <div *ngIf="daysSelected.length > 0" class="selected-dates-chips">
+                  <label class="chips-label">Selected Dates:</label>
+                  <mat-chip-set aria-label="Selected dates" class="dates-chip-set">
+                    <mat-chip *ngFor="let date of daysSelected" class="date-chip" (removed)="removeSelectedDate(date)" highlighted>
+                      {{ date | date:'EEE, d MMM yyyy' }}
+                      <button matChipRemove aria-label="Remove date">
+                        <mat-icon>cancel</mat-icon>
+                      </button>
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Slot Button -->
+          <button type="button" mat-raised-button class="btn-add-slot" (click)="addSlotFromForm()" [disabled]="!slotAddForm.valid || (slots.controls.length > 0 && editingIndex === null)">
+            <mat-icon>add</mat-icon>
+            {{ editingIndex !== null ? 'Save Changes' : 'Add Slot' }}
+          </button>
+
+          <!-- Slot List -->
+          <div class="slots-list" *ngIf="slots.controls.length > 0">
+            <h3 class="section-label">Added Slots ({{ slots.controls.length }})</h3>
+            <div class="slots-grid">
+              <div class="slot-card" *ngFor="let slot of slots.controls; let i = index">
+                <div class="slot-info">
+                  <div class="slot-date">
+                    {{ slot.value.startdate | date:'d MMM yyyy' }}
+                    <span *ngIf="(slot.value.startdate | date:'yyyyMMdd') !== (slot.value.enddate | date:'yyyyMMdd')"> – {{ slot.value.enddate | date:'d MMM yyyy' }}</span>
+                  </div>
+                  <div class="slot-time">
+                    <mat-icon>schedule</mat-icon>
+                    {{ slot.value.start | date:'shortTime' }} - {{ slot.value.end | date:'shortTime' }}</div>
+                  <div class="slot-price">{{ slot.value.price | currency:'INR' }}</div>
+                  <div *ngIf="slot.value.slotType === 'flexible'" class="slot-meta">
+                    Min: {{ slot.value.minSlotTime }}min · {{ slot.value.minSlotPrice | currency:'INR' }} · Buffer: {{ slot.value.bufferTime }}min
+                  </div>
+                </div>
+                <div class="slot-actions">
+                  <button mat-icon-button (click)="editSlot(i)" class="icon-btn-edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="removeSlot(i)" class="icon-btn-delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="step-actions">
+          <button mat-button class="btn-back" (click)="stepper.previous()">Back</button>
+          <button mat-raised-button class="btn-primary" (click)="onSubmit()" [disabled]="!slotManagementForm.valid">
+            Create Venue
+          </button>
+        </div>
+      </div>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>

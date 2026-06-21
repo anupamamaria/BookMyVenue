@@ -1,0 +1,223 @@
+<div class="manage-page" *ngIf="venue; else loading">
+
+  <!-- Nav bar -->
+  <nav class="manage-nav">
+    <button mat-button class="back-btn" routerLink="/venues">
+      <mat-icon>arrow_back</mat-icon>
+      My Venues
+    </button>
+  </nav>
+
+  <!-- Hero image -->
+  <div class="manage-hero">
+    <img *ngIf="heroImages.length > 0; else heroPlaceholder"
+         [src]="heroImages[heroIndex]" [alt]="venue.name" class="hero-img" />
+    <ng-template #heroPlaceholder>
+      <div class="hero-img hero-img--placeholder"></div>
+    </ng-template>
+    <div class="hero-overlay">
+      <span class="status-pill" [ngClass]="venue.status">{{ venue.status }}</span>
+      <h1 class="hero-title">{{ venue.name }}</h1>
+      <p class="hero-sub">
+        <mat-icon>place</mat-icon>
+        {{ venue.location }}
+        <span *ngIf="venue.venueType">&nbsp;·&nbsp;{{ venueTypeLabel(venue.venueType) }}</span>
+      </p>
+    </div>
+  
+    <!-- Prev button -->
+    <button class="hero-nav hero-nav--prev"
+            *ngIf="heroImages.length > 1"
+            type="button"
+            (click)="heroPrev()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  
+    <!-- Next button -->
+    <button class="hero-nav hero-nav--next"
+            *ngIf="heroImages.length > 1"
+            type="button"
+            (click)="heroNext()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  
+    <!-- Dot indicators -->
+    <div class="hero-dots" *ngIf="heroImages.length > 1">
+      <span class="hero-dot"
+            *ngFor="let img of heroImages; let i = index"
+            [class.hero-dot--active]="i === heroIndex"
+            (click)="heroIndex = i">
+      </span>
+    </div>
+  
+    <!-- Counter -->
+    <span class="hero-counter" *ngIf="heroImages.length > 1">
+      {{ heroIndex + 1 }} / {{ heroImages.length }}
+    </span>
+  </div>
+
+  <!-- Body -->
+  <div class="manage-body">
+
+    <!-- ── LEFT: details + slots ── -->
+    <div class="manage-main">
+
+      <!-- Details card -->
+      <section class="info-card">
+        <h2 class="section-title">Venue Details</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <mat-icon>apartment</mat-icon>
+            <div>
+              <span class="info-label">Type</span>
+              <span class="info-value">{{ venueTypeLabel(venue.venueType) }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>place</mat-icon>
+            <div>
+              <span class="info-label">Location</span>
+              <span class="info-value">{{ venue.location }}</span>
+            </div>
+          </div>
+          <div class="info-item" *ngIf="venue.address">
+            <mat-icon>home</mat-icon>
+            <div>
+              <span class="info-label">Address</span>
+              <span class="info-value">{{ venue.address }}</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>groups</mat-icon>
+            <div>
+              <span class="info-label">Capacity</span>
+              <span class="info-value">{{ venue.capacity }} guests</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>star</mat-icon>
+            <div>
+              <span class="info-label">Rating</span>
+              <span class="info-value">{{ venue.rating }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="description-block" *ngIf="venue.description">
+          <span class="info-label">Description</span>
+          <p class="description-text">{{ venue.description }}</p>
+        </div>
+
+        <!-- Amenities -->
+        <div class="venue-amenities-block" *ngIf="amenityList.length > 0">
+            <div class="amenities-grid">
+              <div class="amenity-item" *ngFor="let a of amenityList">
+                <mat-icon class="amenity-icon">{{ a.icon }}</mat-icon>
+                <span>{{ a.label }}</span>
+              </div>
+            </div>
+        </div>
+      </section>
+
+      <!-- Slots section -->
+      <section class="slots-section">
+        <div class="slots-header">
+          <h2 class="section-title">Slots</h2>
+          <span class="slot-summary-pill">{{ totalSlots }} total &nbsp;·&nbsp; {{ bookedSlots }} booked &nbsp;·&nbsp; {{ availableSlots }} available</span>
+        </div>
+
+        <div class="no-slots" *ngIf="slotGroups.length === 0">
+          <mat-icon>event_busy</mat-icon>
+          <p>No slots have been created for this venue yet.</p>
+        </div>
+
+        <div class="date-group" *ngFor="let group of slotGroups">
+          <!-- Date header -->
+          <div class="date-header">
+            <mat-icon>calendar_today</mat-icon>
+            <span class="date-label">{{ group.dateIso | date:'EEE, d MMM yyyy' }}</span>
+            <span *ngIf="group.isMultiDay" class="multi-day-badge">
+              <mat-icon>arrow_forward</mat-icon>
+              {{ group.endDateIso | date:'d MMM yyyy' }}
+              &nbsp;(multi-day)
+            </span>
+          </div>
+
+          <!-- Slot cards -->
+          <div class="slot-card-list">
+            <div class="slot-card"
+                 *ngFor="let slot of group.slots"
+                 [class.slot-card--booked]="slot.isBooked"
+                 [class.slot-card--available]="!slot.isBooked"
+                 [class.slot-card--cancelled]="slot.bookingStatus === 'cancelled'">
+
+              <!-- Left: time + price -->
+              <div class="slot-main">
+                <div class="slot-time">
+                  <mat-icon>schedule</mat-icon>
+                  {{ slot.start }} – {{ slot.end }}
+                </div>
+                <div class="slot-price">{{ slot.price | currency:'INR':'symbol':'1.0-0' }}</div>
+                <span class="slot-type-badge">{{ slot.slotType }}</span>
+              </div>
+
+              <!-- Right: booking status -->
+              <div class="slot-booking">
+                <ng-container *ngIf="slot.isBooked; else availableTpl">
+                  <div class="booking-info">
+                    <div class="booking-info__status-row">
+                      <span class="booking-info__status-dot"></span>
+                      <span class="booking-info__status-text">Booked</span>
+                    </div>
+                    <div class="booking-info__chips">
+                      <span class="booking-chip booking-chip--user">
+                        <mat-icon>person</mat-icon>{{ slot.bookedBy }}
+                      </span>
+                    </div>
+                  </div>
+                </ng-container>
+                <ng-template #availableTpl>
+                  <div class="available-indicator">
+                    <mat-icon>event_available</mat-icon>
+                    <span>Available</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── RIGHT: stats sidebar ── -->
+    <aside class="manage-sidebar">
+      <div class="stat-card">
+        <div class="stat-icon-wrap total"><mat-icon>calendar_month</mat-icon></div>
+        <div class="stat-value">{{ totalSlots }}</div>
+        <div class="stat-label">Total Slots</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap booked"><mat-icon>check_circle</mat-icon></div>
+        <div class="stat-value">{{ bookedSlots }}</div>
+        <div class="stat-label">Booked</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap available"><mat-icon>event_available</mat-icon></div>
+        <div class="stat-value">{{ availableSlots }}</div>
+        <div class="stat-label">Available</div>
+      </div>
+      <div class="stat-card stat-card--revenue">
+        <div class="stat-icon-wrap revenue"><mat-icon>currency_rupee</mat-icon></div>
+        <div class="stat-value">{{ totalRevenue | currency:'INR':'symbol':'1.0-0' }}</div>
+        <div class="stat-label">Revenue Earned</div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<ng-template #loading>
+  <div class="loading-state">
+    <mat-icon>hourglass_empty</mat-icon>
+    <p>Loading venue details…</p>
+  </div>
+</ng-template>

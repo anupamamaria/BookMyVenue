@@ -1,0 +1,44 @@
+<nav class="global-nav">
+  <a routerLink="/" class="nav-logo">
+    <span class="material-symbols-outlined home-icon">home</span>
+    <span class="logo-text">BookMyVenue</span>
+  </a>
+
+  <div class="nav-user">
+    <button class="user-menu-btn" [class.is-logged-in]="isLoggedIn" (click)="toggleUserMenu()">
+      <ng-container *ngIf="!isLoggedIn">
+        <span class="material-symbols-outlined" style="font-size:20px;color:#717171">menu</span>
+        <span class="material-symbols-outlined user-icon-logged-out">person</span>
+      </ng-container>
+      <ng-container *ngIf="isLoggedIn && currentUser">
+        <div class="avatar-circle" [style.background]="avatarColor">{{ userInitials }}</div>
+      </ng-container>
+    </button>
+
+    <div class="user-dropdown" *ngIf="showUserMenu">
+      <div class="dropdown-identity" *ngIf="isLoggedIn && currentUser">
+        <div class="avatar-circle avatar-circle--lg" [style.background]="avatarColor">{{ userInitials }}</div>
+        <div>
+          <p class="identity-name">{{ currentUser.name }}</p>
+          <p class="identity-email">{{ currentUser.email }}</p>
+        </div>
+      </div>
+      <hr class="dropdown-divider" *ngIf="isLoggedIn" />
+      <ng-container *ngIf="!isLoggedIn">
+        <a class="dropdown-item" (click)="openLoginDialog()"><strong>Log in or Signup</strong></a>
+      </ng-container>
+      <ng-container *ngIf="isLoggedIn">
+        <a class="dropdown-item" (click)="openProfileDialog()">
+          <span class="material-symbols-outlined">person</span>My Profile
+        </a>
+        <a routerLink="/bookings" class="dropdown-item" (click)="showUserMenu = false">
+          <span class="material-symbols-outlined">calendar_month</span>My Bookings
+        </a>
+        <hr class="dropdown-divider" />
+        <a class="dropdown-item" (click)="logout()">
+          <span class="material-symbols-outlined">logout</span>Log out
+        </a>
+      </ng-container>
+    </div>
+  </div>
+</nav>
