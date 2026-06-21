@@ -54,9 +54,13 @@ public class VenueOwnerController {
             @PathVariable Long venueId,
             @RequestParam("images") List<MultipartFile> images,
             @RequestParam("profileIndex") int profileIndex) {
+        System.out.println("UPLOAD IMAGES CONTROLLER HIT");
+        System.out.println("Venue ID: " + venueId);
+        System.out.println("Image count: " + images.size());
         Long ownerId = (Long) request.getAttribute("userId");
         try{
             venueOwnerService.uploadVenueImage(ownerId, venueId, images, profileIndex);
+            System.out.println("UPLOAD COMPLETED");
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("Venue Images Upload successful");
         } catch (IOException e) {
@@ -78,7 +82,7 @@ public class VenueOwnerController {
         venueStatus, page, size));
     }
 
-    @GetMapping("/venue/details/{venueId")
+    @GetMapping("/venue/details/{venueId}")
     public ResponseEntity<VenueDetailsResponseDTO> getVenueDetails(
             @PathVariable Long venueId,
             HttpServletRequest request
