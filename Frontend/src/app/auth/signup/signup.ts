@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { RouterLink } from '@angular/router';
 import { Authservice } from '../authservice';
 import { firstValueFrom } from 'rxjs';
 
@@ -15,15 +14,14 @@ import { firstValueFrom } from 'rxjs';
 export class Signup {
   signupForm: FormGroup;
   errorMessage = '';
-  loading = false;
+  loading = signal(false);
   role: 'USER' | 'VENUE_OWNER' = 'USER';
   message = '';
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<Signup>,
-    private authService: Authservice,
-    private cdr: ChangeDetectorRef
+    private authService: Authservice
   ) {
     this.signupForm = this.buildForm();
   }
@@ -53,7 +51,7 @@ export class Signup {
 
   async onSubmit(): Promise<void> {
     if (this.signupForm.invalid || this.passwordMismatch) return;
-    this.loading = true;
+    this.loading.set(true);
     this.errorMessage = '';
     try {
       const response = await firstValueFrom(
@@ -70,8 +68,7 @@ export class Signup {
       this.errorMessage = 'Signup failed';
     } 
     finally {
-      this.loading = false;
-      this.cdr.detectChanges();
+      this.loading.set(false);
     }
   }
 
