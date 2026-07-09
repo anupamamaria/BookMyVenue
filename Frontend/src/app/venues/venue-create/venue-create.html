@@ -113,6 +113,7 @@
         </form>
 
         <div class="step-actions">
+          <button mat-raised-button class="btn-back" (click)="cancelWizard()"> Cancel </button>
           <button mat-raised-button class="btn-primary" (click)="stepper.next()" [disabled]="!basicDetailsForm.valid">
             Continue
           </button>
@@ -168,7 +169,7 @@
             <div [formGroup]="slotAddForm" class="slot-row">
               <mat-form-field appearance="outline" class="time-field">
                   <mat-label>Start Time</mat-label>
-                  <input matInput formControlName="start" [matTimepicker]="startTimePicker">
+                  <input matInput formControlName="start" [matTimepicker]="startTimePicker" />
                   <mat-timepicker-toggle matIconSuffix [for]="startTimePicker">
                   </mat-timepicker-toggle>
                   <mat-timepicker #startTimePicker></mat-timepicker>
@@ -176,7 +177,7 @@
             
               <mat-form-field appearance="outline" class="time-field">
                 <mat-label>End Time</mat-label>
-                <input matInput formControlName="end" [matTimepicker]="endTimePicker">
+                <input matInput formControlName="end" [matTimepicker]="endTimePicker" />
                 <mat-timepicker-toggle matIconSuffix [for]="endTimePicker">
                 </mat-timepicker-toggle>
                 <mat-timepicker #endTimePicker></mat-timepicker>
@@ -189,7 +190,7 @@
             </div>
           
             <!-- Flexible-only fields -->
-            <div [formGroup]="slotAddForm" *ngIf="slotManagementForm.get('slotType')?.value === 'flexible'" class="slot-row">
+            <div [formGroup]="slotAddForm" *ngIf="slotManagementForm.get('slotType')?.value === 'FLEXIBLE'" class="slot-row">
               <mat-form-field appearance="outline" class="time-field">
                 <mat-label>Min Slot Time (mins)</mat-label>
                 <input matInput type="number" formControlName="minSlotTime" placeholder="30" />
@@ -301,7 +302,7 @@
                     <mat-icon>schedule</mat-icon>
                     {{ slot.value.start | date:'shortTime' }} - {{ slot.value.end | date:'shortTime' }}</div>
                   <div class="slot-price">{{ slot.value.price | currency:'INR' }}</div>
-                  <div *ngIf="slot.value.slotType === 'flexible'" class="slot-meta">
+                  <div *ngIf="slot.value.slotType === 'FLEXIBLE'" class="slot-meta">
                     Min: {{ slot.value.minSlotTime }}min · {{ slot.value.minSlotPrice | currency:'INR' }} · Buffer: {{ slot.value.bufferTime }}min
                   </div>
                 </div>
@@ -319,8 +320,9 @@
         </form>
 
         <div class="step-actions">
+          <button mat-raised-button class="btn-back" (click)="cancelWizard()"> Cancel </button>
           <button mat-button class="btn-back" (click)="stepper.previous()">Back</button>
-          <button mat-raised-button class="btn-primary" (click)="onSubmit()" [disabled]="!slotManagementForm.valid">
+          <button mat-raised-button class="btn-primary" (click)="onSubmit()" [disabled]="!slotManagementForm.valid || slots.controls.length === 0">
             Create Venue
           </button>
         </div>

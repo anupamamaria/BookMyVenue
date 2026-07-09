@@ -1,4 +1,4 @@
-<div class="venue-detail-page" *ngIf="venue; else loading">
+<div class="venue-detail-page" *ngIf="venue() as venue; else loading">
 
   <!-- Back nav -->
   <nav class="detail-nav">
@@ -10,12 +10,12 @@
 
   <!-- Hero Image -->
   <div class="detail-hero">
-    <img [src]="heroImages[heroIndex]" [alt]="venue.name" class="detail-image" />
+    <img [src]="heroImages()[heroIndex()]" [alt]="venue.name" class="detail-image" />
     <div class="hero-overlay"></div>
 
     <!-- Prev button -->
     <button class="hero-nav hero-nav--prev"
-            *ngIf="heroImages.length > 1"
+            *ngIf="heroImages().length > 1"
             type="button"
             (click)="heroPrev()">
       <mat-icon>chevron_left</mat-icon>
@@ -23,24 +23,24 @@
 
     <!-- Next button -->
     <button class="hero-nav hero-nav--next"
-            *ngIf="heroImages.length > 1"
+            *ngIf="heroImages().length > 1"
             type="button"
             (click)="heroNext()">
       <mat-icon>chevron_right</mat-icon>
     </button>
 
     <!-- Dot indicators -->
-    <div class="hero-dots" *ngIf="heroImages.length > 1">
+    <div class="hero-dots" *ngIf="heroImages().length > 1">
       <span class="hero-dot"
-            *ngFor="let img of heroImages; let i = index"
-            [class.hero-dot--active]="i === heroIndex"
-            (click)="heroIndex = i">
+            *ngFor="let img of heroImages(); let i = index"
+            [class.hero-dot--active]="i === heroIndex()"
+            (click)="heroIndex.set(i)">
       </span>
     </div>
 
     <!-- Counter -->
-    <span class="hero-counter" *ngIf="heroImages.length > 1">
-      {{ heroIndex + 1 }} / {{ heroImages.length }}
+    <span class="hero-counter" *ngIf="heroImages().length > 1">
+      {{ heroIndex() + 1 }} / {{ heroImages().length }}
     </span>
   </div>
 
@@ -55,8 +55,8 @@
         <div class="venue-title-row">
           <h1 class="detail-name">{{ venue.name }}</h1>
           <div class="venue-rating">
-            <mat-icon class="star-icon">star</mat-icon>
-            <span class="rating-value">{{ venue.rating }}</span>
+            <!-- <mat-icon class="star-icon">star</mat-icon>
+            <span class="rating-value">{{ venue().rating }}</span> -->
           </div>
         </div>
         <p class="detail-location">
@@ -74,7 +74,7 @@
       <!-- Description -->
       <div class="venue-desc-block">
         <h2 class="block-title">About this venue</h2>
-        <p class="detail-desc">{{ venue.description }}</p>
+        <p class="detail-desc">{{ venue.additional }}</p>
       </div>
 
       <!-- Amenities -->
@@ -99,7 +99,7 @@
             <mat-form-field appearance="outline" class="date-picker-field">
               <mat-label>Start Date</mat-label>
               <input matInput [matDatepicker]="startPicker" [min]="today"
-                     [value]="startDate" (dateChange)="onStartDateChange($event.value)"
+                     [value]="startDate()" (dateChange)="onStartDateChange($event.value)"
                      placeholder="Select date" readonly />
               <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
               <mat-datepicker #startPicker></mat-datepicker>
@@ -110,7 +110,7 @@
             <mat-form-field appearance="outline" class="date-picker-field">
               <mat-label>End Date</mat-label>
               <input matInput [matDatepicker]="endPicker" [min]="endDateMin"
-                     [value]="endDate" (dateChange)="onEndDateChange($event.value)"
+                     [value]="endDate()" (dateChange)="onEndDateChange($event.value)"
                      placeholder="Select date" readonly />
               <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
               <mat-datepicker #endPicker></mat-datepicker>
@@ -119,20 +119,20 @@
         </div>
 
         <!-- Prompt when dates not yet fully selected -->
-        <div class="date-prompt" *ngIf="!startDate || !endDate">
+        <div class="date-prompt" *ngIf="!startDate() || !endDate()">
           <mat-icon>date_range</mat-icon>
           <p>Select your event dates above to view available time slots</p>
         </div>
 
         <!-- Slot Groups -->
-        <div class="slots-container" *ngIf="startDate && endDate">
-          <div class="slots-loading" *ngIf="slotsLoading">
+        <div class="slots-container" *ngIf="startDate() && endDate()">
+          <div class="slots-loading" *ngIf="slotsLoading()">
             <mat-spinner diameter="32"></mat-spinner>
           </div>
 
-          <ng-container *ngIf="!slotsLoading">
-            <ng-container *ngIf="slotGroups.length > 0; else noSlots">
-              <div class="slot-group" *ngFor="let group of slotGroups">
+          <ng-container *ngIf="!slotsLoading()">
+            <ng-container *ngIf="slotGroups().length > 0; else noSlots">
+              <div class="slot-group" *ngFor="let group of slotGroups()">
                 <div class="slot-group-header" [class.multiday-header]="group.isMultiDay">
                   <mat-icon class="group-icon" *ngIf="group.isMultiDay">card_giftcard</mat-icon>
                   <mat-icon class="group-icon" *ngIf="!group.isMultiDay">calendar_today</mat-icon>
@@ -142,26 +142,95 @@
                   <button
                     class="slot-chip"
                     *ngFor="let slot of group.slots"
-                    [class.selected]="selectedSlot?.id === slot.id"
-                    [class.booked]="!slot.available"
-                    [class.multiday-chip]="slot.slotType === 'multiday'"
-                    [disabled]="!slot.available"
+                    [class.selected]="selectedSlot()?.slot?.slotId === slot.slotId || expandedFlexSlotId() === slot.slotId"
+                    [class.booked]="!isAvailable(slot)"
+                    [class.multiday-chip]="isMultiDay(slot)"
+                    [class.flex-chip]="slot.slotType === 'FLEXIBLE'"
+                    [class.flex-expanded]="expandedFlexSlotId() === slot.slotId"
+                    [disabled]="!isAvailable(slot)"
                     (click)="selectSlot(slot)"
                   >
-                    <ng-container *ngIf="slot.slotType === 'multiday'">
-                      <div class="pkg-badge">{{ slot.durationDays }}-Day Package</div>
+                    <!-- Multi-day header -->
+                    <ng-container *ngIf="isMultiDay(slot)">
+                      <div class="pkg-badge">{{ getDurationDays(slot) }}-Day Package</div>
                       <div class="pkg-date-range">{{ formatSlotDateRange(slot) }}</div>
                     </ng-container>
-
+                  
+                    <!-- Time range -->
                     <div class="slot-time-range">
-                      <span class="slot-time-from">{{ formatTime(slot.startTime) }}</span>
+                      <span class="slot-time-from">{{ formatTime(slot.startDateTime) }}</span>
                       <span class="slot-dash">—</span>
-                      <span class="slot-time-to">{{ formatTime(slot.endTime) }}</span>
+                      <span class="slot-time-to">{{ formatTime(slot.endDateTime) }}</span>
                     </div>
-                    <div class="slot-price">{{ slot.price | currency:'INR':'symbol':'1.0-0' }}</div>
+                  
+                    <!-- Price: FLEXIBLE shows "from ₹X", fixed shows flat price -->
+                    <div class="slot-price" *ngIf="slot.slotType !== 'FLEXIBLE'">
+                      {{ slot.totalSlotPrice | currency:'INR':'symbol':'1.0-0' }}
+                    </div>
+                    <div class="slot-price flex-from-price" *ngIf="slot.slotType === 'FLEXIBLE'">
+                      from {{ slot.minSlotPrice | currency:'INR':'symbol':'1.0-0' }}
+                    </div>
+                  
+                    <!-- Status -->
                     <div class="slot-status">
-                      <span class="status-dot" [class.available]="slot.available" [class.unavailable]="!slot.available"></span>
-                      <span>{{ slot.available ? 'Available' : 'Booked' }}</span>
+                      <span class="status-dot" [class.available]="isAvailable(slot)" [class.unavailable]="!isAvailable(slot)"></span>
+                      <span>{{ isAvailable(slot) ? 'Available' : 'Booked' }}</span>
+                    </div>
+                  
+                    <!-- Customize hint (only for FLEXIBLE, collapsed state) -->
+                    <div class="flex-customize-hint" *ngIf="slot.slotType === 'FLEXIBLE' && isAvailable(slot) && expandedFlexSlotId() !== slot.slotId">
+                      <mat-icon class="hint-icon">tune</mat-icon>
+                      <span>Customize time</span>
+                    </div>
+                  
+                    <!-- ── Inline flex picker (expands on tap) ── -->
+                    <div class="flex-picker" *ngIf="slot.slotType === 'FLEXIBLE' && expandedFlexSlotId() === slot.slotId" (click)="$event.stopPropagation()">
+                      
+                      <div class="flex-booked-note" *ngIf="slot.bookings?.length">
+                        <mat-icon class="booked-icon">event_busy</mat-icon>
+                        <span class="booked-text">
+                          Already booked:
+                          <span class="booked-range" *ngFor="let b of slot.bookings; let last = last">
+                            {{ formatTime(b.startDateTime) }}-{{ formatTime(b.endDateTime) }}<span *ngIf="!last">, </span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="flex-picker-row">
+                        <label class="flex-label">Start time</label>
+                        <ng-container *ngIf="startOptionsCache().get(slot.slotId) as groups; else noWindows">
+                          <select class="flex-select"
+                            [value]="flexSelections().get(slot.slotId)?.startDateTime ?? slot.startDateTime"
+                            (change)="onFlexStartChange(slot, $any($event.target).value)">
+                            <optgroup *ngFor="let group of groups" [label]="group.label">
+                              <option *ngFor="let t of group.options" [value]="t">{{ formatTime(t) }}</option>
+                            </optgroup>
+                          </select>
+                        </ng-container>
+                        <ng-template #noWindows>
+                          <p class="flex-no-windows">No time left today that fits the minimum duration.</p>
+                        </ng-template>
+                      </div>
+
+                      <div class="flex-picker-row">
+                        <label class="flex-label">End time</label>
+                        <ng-container *ngIf="flexEndOptions(slot, flexSelections().get(slot.slotId)?.startDateTime ?? slot.startDateTime) as endOptions">
+                          <select class="flex-select"
+                            *ngIf="endOptions.length > 0; else noEndOptions"
+                            [value]="flexSelections().get(slot.slotId)?.endDateTime"
+                            (change)="onFlexEndChange(slot, $any($event.target).value)">
+                            <option *ngFor="let t of endOptions" [value]="t">{{ formatTime(t) }}</option>
+                          </select>
+                          <ng-template #noEndOptions>
+                            <p class="flex-no-windows">No valid end time for this start time.</p>
+                          </ng-template>
+                        </ng-container>
+                      </div>
+
+                      <button type="button" class="flex-confirm-btn"
+                        [disabled]="flexEndOptions(slot, flexSelections().get(slot.slotId)?.startDateTime ?? slot.startDateTime).length === 0"
+                        (click)="confirmFlexSlot(slot)">
+                        Confirm this slot
+                      </button>
                     </div>
                   </button>
                 </div>
@@ -178,8 +247,8 @@
     <!-- RIGHT: Booking Card (sticky) -->
     <aside class="detail-booking-card">
       <div class="card-rating">
-        <mat-icon class="star-icon-sm">star</mat-icon>
-        <span>{{ venue.rating }}</span>
+        <!-- <mat-icon class="star-icon-sm">star</mat-icon>
+        <span>{{ venue.rating }}</span> -->
         <span class="rating-sep">·</span>
         <mat-icon class="star-icon-sm">group</mat-icon>
         <span class="capacity-label">{{ venue.capacity }} guests max</span>
@@ -189,10 +258,10 @@
 
       <!-- Selection Summary -->
       <div class="card-summary">
-        <div class="summary-row" *ngIf="startDate; else noDate">
+        <div class="summary-row" *ngIf="startDate(); else noDate">
           <mat-icon class="summary-icon">date_range</mat-icon>
           <div>
-            <p class="summary-label">{{ selectedSlot ? 'Date' : 'Search Range' }}</p>
+            <p class="summary-label">{{ selectedSlot() ? 'Date' : 'Search Range' }}</p>
             <p class="summary-value">{{ selectedSlotDateLabel }}</p>
           </div>
         </div>
@@ -203,14 +272,14 @@
           </p>
         </ng-template>
 
-        <div class="summary-row" *ngIf="selectedSlot; else noSlot">
+        <div class="summary-row" *ngIf="selectedSlot() as selected; else noSlot">
           <mat-icon class="summary-icon">schedule</mat-icon>
           <div>
-            <p class="summary-label">{{ selectedSlot.slotType === 'multiday' ? 'Package' : 'Time Slot' }}</p>
-            <p class="summary-value">{{ formatTime(selectedSlot.startTime) }} — {{ formatTime(selectedSlot.endTime) }}</p>
-            <p class="summary-days" *ngIf="selectedSlot.durationDays">{{ selectedSlot.durationDays }}-day package</p>
+            <p class="summary-label">{{ isMultiDay(selected.slot) ? 'Package' : 'Time Slot' }}</p>
+            <p class="summary-value">{{ formatTime(selected.selectedStartDateTime) }} — {{ formatTime(selected.selectedEndDateTime) }}</p>
+            <p class="summary-days" *ngIf="isMultiDay(selected.slot)">{{ getDurationDays(selected.slot) }}-day package</p>
           </div>
-          <span class="summary-slot-price">{{ selectedSlot.price | currency:'INR':'symbol':'1.0-0' }}</span>
+          <span class="summary-slot-price">{{ selected.calculatedPrice | currency:'INR':'symbol':'1.0-0' }}</span>
         </div>
         <ng-template #noSlot>
           <p class="summary-hint">
@@ -219,18 +288,45 @@
           </p>
         </ng-template>
       </div>
-
-      <button
-        class="btn-book"
-        [disabled]="!selectedSlot"
-        (click)="onBook()"
-      >
-        {{ selectedSlot ? 'Book this Slot' : 'Select a slot to book' }}
-      </button>
-
-      <p class="no-charge-note">You won't be charged yet</p>
+      <div>
+        <ng-container *ngIf="!bookingConfirmed(); else bookingReserved">  
+          <button
+            class="btn-book"
+            [disabled]="!selectedSlot()"
+            (click)="onBook()">
+            {{ selectedSlot() ? 'Book this Slot' : 'Select a slot to book' }}
+          </button>
+          <p class="no-charge-note">You won't be charged yet</p>
+        </ng-container>
+        <ng-template #bookingReserved>
+          <ng-container *ngIf="!paymentCompleted(); else paymentSuccess">
+            <div class="booking-success">
+              <mat-icon>check_circle</mat-icon>
+              <div>
+                <h4>Slot Reserved</h4>
+                <p>Your booking has been reserved. Complete the payment to confirm it.</p>
+              </div>
+            </div>
+            <p class="payment-error-note" *ngIf="paymentFailed()">
+              Your payment didn't go through. Please try again.
+            </p>
+          
+            <button class="btn-book btn-pay" (click)="onPay()">
+              {{ paymentFailed() ? 'Retry Payment' : 'Pay Now' }}
+            </button>
+          </ng-container>
+        </ng-template>
+        <ng-template #paymentSuccess>
+          <div class="booking-success payment-success">
+            <mat-icon>verified</mat-icon>
+            <div>
+              <h4>Booking Confirmed</h4>
+              <p>Your payment was successful. Your booking is now confirmed.</p>
+            </div>
+          </div>
+        </ng-template>
+      </div>
     </aside>
-
   </div>
 </div>
 
