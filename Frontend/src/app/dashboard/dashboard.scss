@@ -5,6 +5,33 @@
   padding: 24px 40px;
 }
 
+.dashboard-content.side-by-side {
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 24px;
+
+  .venue-section {
+    flex: 0 0 auto;
+    width: 1200px; // or whatever fits your card width
+  }
+
+  .venue-carousel {
+    flex-wrap: wrap;          // logged-in mode: wrap into rows of 4 instead of scrolling
+    overflow-x: visible;      // no horizontal scroll needed at all
+    scroll-snap-type: none;   // snap only makes sense for a scrolling carousel
+  }
+}
+
+.empty-state {
+  text-align: center;
+  font-size: 14px;
+  color: #717171;
+  border: 1px dashed #d8d8d8;
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 26px 16px;
+}
+
 .venue-section {
   margin-bottom: 40px;
 }

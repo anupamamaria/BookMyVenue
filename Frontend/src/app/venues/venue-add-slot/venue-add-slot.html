@@ -1,0 +1,196 @@
+<!-- Backdrop -->
+<div class="drawer-backdrop" [class.drawer-backdrop--visible]="open" (click)="close()"></div>
+
+<!-- Drawer panel -->
+<aside class="add-slot-drawer" [class.add-slot-drawer--open]="open">
+
+  <!-- ── Header ── -->
+  <div class="drawer-header">
+    <div class="drawer-header__left">
+      <div class="drawer-header__icon-wrap">
+        <mat-icon>{{ isEditMode ? 'edit_calendar' : 'calendar_add_on' }}</mat-icon>
+      </div>
+      <div>
+        <h2 class="drawer-header__title">{{ isEditMode ? 'Edit Slot' : 'Add Slot' }}</h2>
+        <p class="drawer-header__sub">Configure availability & pricing</p>
+      </div>
+    </div>
+    <button mat-icon-button class="drawer-close-btn" (click)="close()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Body ── -->
+  <div class="drawer-body">
+    <form [formGroup]="form" autocomplete="off">
+
+      <!-- 1 · Slot type -->
+      <section class="form-section">
+        <p class="form-section__label">
+          <mat-icon>tune</mat-icon> Booking Type
+        </p>
+        <div class="slot-type-toggle" [class.slot-type-toggle--locked]="isEditMode">
+          <button
+            type="button"
+            class="type-btn"
+            [class.type-btn--active]="form.get('slotType')?.value === 'FIXED'"
+            [disabled]="isEditMode"
+            (click)="form.get('slotType')?.setValue('FIXED')">
+            <mat-icon>event</mat-icon>
+            <span>Fixed</span>
+            <small>Set exact start & end times</small>
+          </button>
+          <button
+            type="button"
+            class="type-btn"
+            [class.type-btn--active]="form.get('slotType')?.value === 'FLEXIBLE'"
+            [disabled]="isEditMode"
+            (click)="form.get('slotType')?.setValue('FLEXIBLE')">
+            <mat-icon>tune</mat-icon>
+            <span>Flexible</span>
+            <small>Guest picks duration in a window</small>
+          </button>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- 2 · Date range -->
+      <section class="form-section">
+        <p class="form-section__label">
+          <mat-icon>date_range</mat-icon> Date Range
+        </p>
+        <div class="date-row">
+          <mat-form-field appearance="outline" class="field-half">
+            <mat-label>Start Date</mat-label>
+            <input matInput [matDatepicker]="dp1" formControlName="startDate" [min]="minDate" readonly />
+            <mat-datepicker-toggle matSuffix [for]="dp1"></mat-datepicker-toggle>
+            <mat-datepicker #dp1></mat-datepicker>
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-half">
+            <mat-label>End Date</mat-label>
+            <input matInput [matDatepicker]="dp2" formControlName="endDate" [min]="form.get('startDate')?.value || minDate" readonly />
+            <mat-datepicker-toggle matSuffix [for]="dp2"></mat-datepicker-toggle>
+            <mat-datepicker #dp2></mat-datepicker>
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- 3 · Time window -->
+      <section class="form-section">
+        <p class="form-section__label">
+          <mat-icon>schedule</mat-icon>
+          {{ isFlexible ? 'Availability Window' : 'Time Slot' }}
+        </p>
+        <div class="date-row">
+          <mat-form-field appearance="outline" class="field-half">
+            <mat-label>Start Time</mat-label>
+            <!-- <input matInput type="time" formControlName="startTime" />
+            <mat-error>HH:MM required</mat-error> -->
+            
+            <input matInput formControlName="startTime" [matTimepicker]="startTimePicker">
+            <mat-timepicker-toggle matIconSuffix [for]="startTimePicker">
+            </mat-timepicker-toggle>
+            <mat-timepicker #startTimePicker></mat-timepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-half">
+            <mat-label>End Time</mat-label>
+            <!-- <input matInput type="time" formControlName="endTime" />
+            <mat-error>HH:MM required</mat-error> -->
+            <input matInput formControlName="endTime" [matTimepicker]="endTimePicker" />
+            <mat-timepicker-toggle matIconSuffix [for]="endTimePicker">
+            </mat-timepicker-toggle>
+            <mat-timepicker #endTimePicker></mat-timepicker>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- 4 · Pricing -->
+      <section class="form-section">
+        <p class="form-section__label">
+          <mat-icon>currency_rupee</mat-icon> Pricing
+        </p>
+
+        <mat-form-field appearance="outline" class="field-full">
+          <mat-label>{{ isFlexible ? 'Total Slot Price (₹)' : 'Slot Price (₹)' }}</mat-label>
+          <input matInput type="number" formControlName="totalSlotPrice" min="1" placeholder="0" />
+          <mat-error>Enter a valid price</mat-error>
+        </mat-form-field>
+
+        <!-- Flexible-only pricing extras -->
+        <ng-container *ngIf="isFlexible">
+          <div class="date-row">
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Min Duration (mins)</mat-label>
+              <input matInput type="number" formControlName="minSlotTime" min="15" placeholder="60" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Max Duration (mins)</mat-label>
+              <input matInput type="number" formControlName="maxSlotTime" min="15" placeholder="240" />
+            </mat-form-field>
+          </div>
+          <div class="date-row">
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Min Price (₹)</mat-label>
+              <input matInput type="number" formControlName="minSlotPrice" min="0" placeholder="0" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Buffer Time (mins)</mat-label>
+              <input matInput type="number" formControlName="bufferTime" min="0" placeholder="0" />
+            </mat-form-field>
+          </div>
+        </ng-container>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- 5 · Repeat on days -->
+      <section class="form-section" *ngIf="isEnabled">
+        <div class="repeat-header">
+          <p class="form-section__label" style="margin:0">
+            <mat-icon>repeat</mat-icon> Repeat
+          </p>
+          <label class="toggle-switch">
+            <input type="checkbox" formControlName="repeatEnabled" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <ng-container *ngIf="repeatEnabled">
+          <p class="repeat-hint">Apply slot to selected days within the date range</p>
+          <div class="day-chips">
+            <button
+              *ngFor="let d of weekDays"
+              type="button"
+              class="day-chip"
+              [class.day-chip--active]="selectedDays.has(d.value)"
+              (click)="toggleDay(d.value)">
+              {{ d.label }}
+            </button>
+          </div>
+        </ng-container>
+      </section>
+
+    </form>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="drawer-footer">
+    <button mat-stroked-button class="footer-btn footer-btn--cancel" type="button" (click)="close()">
+      Cancel
+    </button>
+    <button mat-raised-button class="footer-btn footer-btn--save" type="button" (click)="submit()">
+      <mat-icon>{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon>
+      {{ isEditMode ? 'Save Changes' : 'Add Slot' }}
+    </button>
+  </div>
+
+</aside>

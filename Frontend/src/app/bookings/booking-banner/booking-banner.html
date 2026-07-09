@@ -1,1 +1,28 @@
-<p>booking-banner works!</p>
+<div class="booking-banner">
+  <img
+    class="banner-image"
+    [src]="'https://res.cloudinary.com/digxm3guh/image/upload/v1783241776/venues/m3zm3stehwcvbhpicz98.jpg'"
+    [alt]="booking.venueName">
+  <div class="banner-content">
+    <div class="banner-label">
+      Upcoming Booking
+    </div>
+    <h3>{{ booking.venueName }}</h3>
+    <div class="banner-info">
+      <span>
+        <span class="material-symbols-outlined">location_on</span>
+        {{ booking.location }}
+      </span>
+      <span>
+        <span class="material-symbols-outlined">calendar_today</span>
+        {{ booking.startDateTime | date:'dd MMM yyyy' }}
+      </span>
+      <span>
+        <span class="material-symbols-outlined">schedule</span>
+        {{ booking.startDateTime | date:'hh:mm a' }}
+        -
+        {{ booking.endDateTime | date:'hh:mm a' }}
+      </span>
+    </div>
+  </div>
+</div>

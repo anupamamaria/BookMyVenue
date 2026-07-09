@@ -140,9 +140,135 @@
   }
 }
 
-.dropdown-divider {
-  margin: 4px 0;
-  border-color: #ebebeb;
+.nav-filters {
+  flex: 1 1 auto;
+  max-width: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.filter-text-input{
+  border: none;
+  outline: none;
+
+  &:focus{
+    border: none;
+    outline: none;
+    box-shadow: none;
+  }
+}
+.filter-bar-interactive {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 40px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+  flex: 1;
+
+  &:hover, &:focus-within {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+  }
+}
+
+.filter-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 16px;
+  min-width: 110px;
+  flex: 1;
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #222;
+    margin: 0;
+  }
+}
+
+.filter-native-select {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: #717171;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+
+  &:focus { color: #222; }
+}
+
+.filter-field-divider {
+  width: 1px;
+  height: 32px;
+  background: #ddd;
+  align-self: center;
+}
+
+.filter-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #717171;
+  cursor: pointer;
+  margin: 4px 6px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &:hover { background: #f7f7f7; color: #ff385c; }
+  .material-symbols-outlined { font-size: 20px; }
+}
+
+.filter-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ff385c;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  margin: 4px 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #e0163a; }
+  .material-symbols-outlined { font-size: 20px; }
+}
+
+
+
+.result-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #717171;
+  background: #f7f7f7;
+  border-radius: 20px;
+  padding: 6px 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  .material-symbols-outlined { font-size: 16px; }
+}
+
+@media (max-width: 900px) {
+  .nav-filters { display: none; } // matches .nav-search collapse breakpoint in home-nav
 }
 
 @media (max-width: 768px) {

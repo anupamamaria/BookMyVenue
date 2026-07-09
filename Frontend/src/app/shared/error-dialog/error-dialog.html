@@ -1,0 +1,14 @@
+<div class="error-dialog">
+  <div class="error-dialog-header">
+    <span class="material-symbols-outlined error-icon">error</span>
+    <h2 class="error-dialog-title">{{ data.title || 'Something went wrong' }}</h2>
+  </div>
+
+  <div class="error-dialog-body">
+    <p>{{ data.message }}</p>
+  </div>
+
+  <div class="error-dialog-actions">
+    <button class="ok-btn" (click)="close()">OK</button>
+  </div>
+</div>

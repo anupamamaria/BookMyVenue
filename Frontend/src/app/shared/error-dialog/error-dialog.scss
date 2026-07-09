@@ -1,0 +1,50 @@
+.error-dialog {
+  padding: 24px;
+  min-width: 280px;
+  max-width: 400px;
+}
+
+.error-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.error-icon {
+  color: #e8604c;
+  font-size: 24px;
+}
+
+.error-dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.error-dialog-body {
+  font-size: 14px;
+  color: #484848;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.error-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ok-btn {
+  background: #e8604c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #d94f3b;
+  }
+}
