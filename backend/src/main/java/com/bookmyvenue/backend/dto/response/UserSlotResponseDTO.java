@@ -5,15 +5,31 @@ import com.bookmyvenue.backend.enums.SlotStatus;
 import com.bookmyvenue.backend.enums.SlotType;
 import lombok.Data;
 
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class SlotResponseDTO {
+public class UserSlotResponseDTO {
 
-    public SlotResponseDTO(Slot slot) {
+    private Long slotId;
+    private SlotType slotType;
+
+    private LocalDateTime startDateTime;
+    private LocalDateTime endDateTime;
+
+    private Integer minSlotTime;
+    private Integer maxSlotTime;
+    private Integer bufferTime;
+    private BigDecimal minSlotPrice;
+
+    private BigDecimal totalSlotPrice;
+
+    private SlotStatus slotStatus;
+
+    private List<UserSlotBookingResponseDTO> bookings;
+
+    public UserSlotResponseDTO(Slot slot) {
         this.slotId = slot.getSlotId();
         this.slotType = slot.getSlotType();
         this.startDateTime = slot.getStartDateTime();
@@ -25,18 +41,4 @@ public class SlotResponseDTO {
         this.totalSlotPrice = slot.getTotalSlotPrice();
         this.slotStatus = slot.getSlotStatus();
     }
-
-    private Long slotId;
-    private SlotType slotType;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
-    private Integer minSlotTime;
-    private Integer maxSlotTime;
-    private BigDecimal minSlotPrice;
-    private Integer bufferTime;
-    private BigDecimal totalSlotPrice;
-    private SlotStatus slotStatus;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private List<VenueSlotBookingResponseDTO> bookings;
 }

@@ -2,6 +2,7 @@ package com.bookmyvenue.backend.controller;
 
 import com.bookmyvenue.backend.dto.request.SlotRequestDTO;
 import com.bookmyvenue.backend.dto.request.VenueRequestDTO;
+import com.bookmyvenue.backend.dto.response.VenueBookingResponseDTO;
 import com.bookmyvenue.backend.dto.response.VenueDashboardResponseDTO;
 import com.bookmyvenue.backend.dto.response.VenueDetailsResponseDTO;
 import com.bookmyvenue.backend.enums.VenueStatus;
@@ -48,6 +49,21 @@ public class VenueOwnerController {
                 .body("Slot Creation Successful");
     }
 
+    @PutMapping("/venue/{venueId}/slot/{slotId}")
+    ResponseEntity<String> editSlot(HttpServletRequest request,
+                                   @PathVariable Long venueId,
+                                    @PathVariable Long slotId,
+                                   @RequestParam(defaultValue = "false") boolean dryRun,
+                                   @Valid @RequestBody SlotRequestDTO slotRequest) {
+        long ownerId = (Long) request.getAttribute("userId");
+        String warning = venueOwnerService.editSlot(ownerId, venueId, slotId, dryRun, slotRequest);
+        if(warning != null){
+            return ResponseEntity.ok("WARNING "+ warning);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Slot Update Successful");
+    }
+
     @PostMapping("/venue/{venueId}/images")
     public ResponseEntity<String> uploadImages(
             HttpServletRequest request,
@@ -91,4 +107,29 @@ public class VenueOwnerController {
         return ResponseEntity.ok(venueOwnerService.getVenueDetails(ownerId, venueId));
 
     }
+
+    @GetMapping("/venue/{venueId}/past-bookings")
+    public ResponseEntity<Page<VenueBookingResponseDTO>> getPastBookings(
+            @PathVariable Long venueId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10")int size,
+            HttpServletRequest request
+    ) {
+        Long ownerId = (long) request.getAttribute("userId");
+        return ResponseEntity.ok(venueOwnerService.getPastBookings(ownerId, venueId, page, size));
+
+    }
+
+    @GetMapping("/venue/{venueId}/upcoming-bookings")
+    public ResponseEntity<Page<VenueBookingResponseDTO>> getUpcomingBookings(
+            @PathVariable Long venueId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10")int size,
+            HttpServletRequest request
+    ) {
+        Long ownerId = (long) request.getAttribute("userId");
+        return ResponseEntity.ok(venueOwnerService.getUpcomingBookings(ownerId, venueId, page, size));
+
+    }
+
 }
