@@ -2,24 +2,13 @@ package com.bookmyvenue.backend.service;
 
 import com.bookmyvenue.backend.dto.request.SlotRequestDTO;
 import com.bookmyvenue.backend.dto.request.VenueRequestDTO;
-import com.bookmyvenue.backend.dto.response.SlotResponseDTO;
-import com.bookmyvenue.backend.dto.response.VenueDashboardResponseDTO;
-import com.bookmyvenue.backend.dto.response.VenueDetailsResponseDTO;
-import com.bookmyvenue.backend.dto.response.VenueImageResponseDTO;
-import com.bookmyvenue.backend.entity.Slot;
-import com.bookmyvenue.backend.entity.User;
-import com.bookmyvenue.backend.entity.Venue;
-import com.bookmyvenue.backend.entity.VenueImage;
-import com.bookmyvenue.backend.enums.Role;
-import com.bookmyvenue.backend.enums.SlotType;
-import com.bookmyvenue.backend.enums.VenueStatus;
+import com.bookmyvenue.backend.dto.response.*;
+import com.bookmyvenue.backend.entity.*;
+import com.bookmyvenue.backend.enums.*;
 import com.bookmyvenue.backend.exception.BadRequestException;
 import com.bookmyvenue.backend.exception.ForbiddenException;
 import com.bookmyvenue.backend.exception.NotFoundException;
-import com.bookmyvenue.backend.repository.SlotRepository;
-import com.bookmyvenue.backend.repository.UserRepository;
-import com.bookmyvenue.backend.repository.VenueImageRepository;
-import com.bookmyvenue.backend.repository.VenueRepository;
+import com.bookmyvenue.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +33,7 @@ public class VenueOwnerService {
     private final SlotRepository slotRepository;
     private final CloudinaryService cloudinaryService;
     private final VenueImageRepository venueImageRepository;
+    private final BookingRepository bookingRepository;
 
     private String checkBufferConflict(List<Slot> allSlots, SlotRequestDTO newSlot) {
 
@@ -92,7 +82,8 @@ public class VenueOwnerService {
         return null;
     }
 
-    private String validateNewSlot(Long venueId, SlotRequestDTO slotRequest){
+    private String validateNewSlot(Long venueId, SlotRequestDTO slotRequest,
+                                   Long excludedSlotId){
 
 //        End > Start (basic sanity)
         if (!slotRequest.getEndDateTime().isAfter(slotRequest.getStartDateTime())) {
@@ -125,8 +116,8 @@ public class VenueOwnerService {
         }
 //        No overlap with existing slots, below check supports multiDay slots
             List<Slot> overlappingSlots = slotRepository.
-                    findByVenueVenueIdAndStartDateTimeBeforeAndEndDateTimeAfter(venueId,
-                            slotRequest.getEndDateTime(), slotRequest.getStartDateTime());
+                    findOverlappingSlots(venueId,
+                            slotRequest.getEndDateTime(), slotRequest.getStartDateTime(), excludedSlotId);
             if (!overlappingSlots.isEmpty()) {
                 Slot conflicting = overlappingSlots.get(0);
                 throw new BadRequestException("Slot overlaps with existing slot: " +
@@ -134,7 +125,7 @@ public class VenueOwnerService {
             }
 //        Buffer check with preceding slot (hard block if flexible, warning if fixed)
 //        Buffer check with following slot (same logic)
-        List<Slot> allSlots = slotRepository.findByVenueVenueId(venueId);
+        List<Slot> allSlots = slotRepository.findByVenueVenueIdExcludingSlot(venueId, excludedSlotId);
         String warning = checkBufferConflict(allSlots, slotRequest);
         return warning;
 
@@ -183,7 +174,7 @@ public class VenueOwnerService {
             throw new ForbiddenException("You don't own this venue");
         }
 
-        String warning = validateNewSlot(venueId, slotRequest);
+        String warning = validateNewSlot(venueId, slotRequest, null);
 
         if (dryRun && warning != null) {
             return warning;
@@ -199,6 +190,43 @@ public class VenueOwnerService {
         slot.setMaxSlotTime(slotRequest.getMaxSlotTime());
         slot.setBufferTime(slotRequest.getBufferTime());
         slot.setTotalSlotPrice(slotRequest.getTotalSlotPrice());
+        slot.setSlotStatus(SlotStatus.AVAILABLE);
+        slotRepository.save(slot);
+        return null;
+    }
+
+    public String editSlot(Long ownerId, Long venueId, Long slotId,
+                          boolean dryRun, SlotRequestDTO slotRequest) {
+
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new NotFoundException("Venue Owner Not Found"));
+        Venue venue = venueRepository.findById(venueId)
+                .orElseThrow(() -> new NotFoundException("Venue Not Found"));
+        if (owner.getRole() != Role.VENUE_OWNER) {
+            throw new ForbiddenException("Only venue owners can edit slots");
+        }
+        if (!owner.getUserId().equals(venue.getOwner().getUserId())) {
+            throw new ForbiddenException("You don't own this venue");
+        }
+        Slot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new NotFoundException("Slot not found"));
+
+        String warning = validateNewSlot(venueId, slotRequest, slotId);
+
+        if (dryRun && warning != null) {
+            return warning;
+        }
+
+        slot.setVenue(venue);
+        slot.setSlotType(slotRequest.getSlotType());
+        slot.setStartDateTime(slotRequest.getStartDateTime());
+        slot.setEndDateTime(slotRequest.getEndDateTime());
+        slot.setMinSlotPrice(slotRequest.getMinSlotPrice());
+        slot.setMinSlotTime(slotRequest.getMinSlotTime());
+        slot.setMaxSlotTime(slotRequest.getMaxSlotTime());
+        slot.setBufferTime(slotRequest.getBufferTime());
+        slot.setTotalSlotPrice(slotRequest.getTotalSlotPrice());
+        slot.setSlotStatus(SlotStatus.AVAILABLE);
         slotRepository.save(slot);
         return null;
     }
@@ -232,7 +260,7 @@ public class VenueOwnerService {
 
     }
 
-    public Page<VenueDashboardResponseDTO> getVenueDashboard(
+    public Page<VenueDashboardResponseDTO>  getVenueDashboard(
             Long ownerId, String location, String type,
             VenueStatus venueStatus, int page, int size) {
 
@@ -252,6 +280,7 @@ public class VenueOwnerService {
             dto.setName(venue.getName());
             dto.setType(venue.getType());
             dto.setLocation(venue.getLocation());
+            dto.setCapacity(venue.getCapacity());
             dto.setAddress(venue.getAddress());
             dto.setVenueStatus(venue.getVenueStatus());
             dto.setCreatedAt(venue.getCreatedAt());
@@ -275,51 +304,71 @@ public class VenueOwnerService {
             throw new ForbiddenException("You don't own this venue");
         }
 
-        VenueDetailsResponseDTO dto = new VenueDetailsResponseDTO();
-        dto.setName(venue.getName());
-        dto.setType(venue.getType());
-        dto.setLocation(venue.getLocation());
-        dto.setAddress(venue.getAddress());
-        dto.setCapacity(venue.getCapacity());
-        dto.setCarParking(venue.isCarParking());
-        dto.setSwimmingPool(venue.isSwimmingPool());
-        dto.setOutsideServicesAllowed(venue.isOutsideServicesAllowed());
-        dto.setCateringProvided(venue.isCateringProvided());
-        dto.setAdditional(venue.getAdditional());
-        dto.setVenueStatus(venue.getVenueStatus());
-        dto.setCreatedAt(venue.getCreatedAt());
-        dto.setUpdatedAt(venue.getUpdatedAt());
-
         List<Slot> allSlots = slotRepository.findByVenueVenueId(venueId);
-        List<SlotResponseDTO> slotResponseDTOS = allSlots.stream().map( slot -> {
-            SlotResponseDTO slotResponseDTO = new SlotResponseDTO();
-            slotResponseDTO.setSlotId(slot.getSlotId());
-            slotResponseDTO.setSlotType(slot.getSlotType());
-            slotResponseDTO.setStartDateTime(slot.getStartDateTime());
-            slotResponseDTO.setEndDateTime(slot.getEndDateTime());
-            slotResponseDTO.setTotalSlotPrice(slot.getTotalSlotPrice());
-            slotResponseDTO.setCreatedAt(slot.getCreatedAt());
-            slotResponseDTO.setUpdatedAt(slot.getUpdatedAt());
-            if(slot.getSlotType()==SlotType.FLEXIBLE){
-                slotResponseDTO.setMinSlotTime(slot.getMinSlotTime());
-                slotResponseDTO.setMaxSlotTime(slot.getMaxSlotTime());
-                slotResponseDTO.setMinSlotPrice(slot.getMinSlotPrice());
-                slotResponseDTO.setBufferTime(slot.getBufferTime());
-            }
-            return slotResponseDTO;
-        }).collect(Collectors.toList());
-        dto.setSlots(slotResponseDTOS);
+        List<SlotResponseDTO> slotResponse = new ArrayList<>();
+        for(Slot slot : allSlots){
+            SlotResponseDTO slotResponseDTO = new SlotResponseDTO(slot);
+
+                List<Booking> bookings = bookingRepository.findAllBookingsForSlot(
+                        slot.getSlotId(), venueId);
+                List<VenueSlotBookingResponseDTO> bookingResponse = bookings.stream()
+                        .map(booking -> new VenueSlotBookingResponseDTO(booking))
+                        .toList();
+                slotResponseDTO.setBookings(bookingResponse);
+
+            slotResponse.add(slotResponseDTO);
+        }
 
         List<VenueImage> allImages = venueImageRepository.findByVenueVenueId(venueId);
-        List<VenueImageResponseDTO> imageResponseDTOs = allImages.stream().map(img -> {
-            VenueImageResponseDTO imageResponseDTO = new VenueImageResponseDTO();
-            imageResponseDTO.setImageId(img.getImageId());
-            imageResponseDTO.setImagePath(img.getImagePath());
-            imageResponseDTO.setProfile(img.isProfile());
-            return imageResponseDTO;
-        }).collect(Collectors.toList());
-        dto.setVenueImages(imageResponseDTOs);
+        List<VenueImageResponseDTO> imageResponseDTOs = allImages.stream()
+                .map(img -> new VenueImageResponseDTO(img))
+                .collect(Collectors.toList());
 
-        return dto;
+        return new VenueDetailsResponseDTO(venue, imageResponseDTOs, slotResponse);
+    }
+
+    public Page<VenueBookingResponseDTO> getPastBookings(Long ownerId, Long venueId, int page, int size){
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new NotFoundException("Venue Owner Not Found"));
+
+        Venue venue = venueRepository.findById(venueId)
+                .orElseThrow(() -> new NotFoundException("Venue Not Found"));
+
+        if (owner.getRole() != Role.VENUE_OWNER) {
+            throw new ForbiddenException("Only venue owners have access to this page");
+        }
+        if(venue.getOwner().getUserId() != ownerId){
+            throw new ForbiddenException("You don't own this venue");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
+        Page<Booking> pastBookings = bookingRepository.findByVenueVenueIdAndBookingStatusAndEndDateTimeLessThanOrderByEndDateTimeDesc(
+                venueId, BookingStatus.CONFIRMED, LocalDateTime.now(), pageable
+        );
+
+        return pastBookings
+                .map(booking -> new VenueBookingResponseDTO(booking));
+    }
+
+    public Page<VenueBookingResponseDTO> getUpcomingBookings(Long ownerId, Long venueId, int page, int size){
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new NotFoundException("Venue Owner Not Found"));
+
+        Venue venue = venueRepository.findById(venueId)
+                .orElseThrow(() -> new NotFoundException("Venue Not Found"));
+
+        if (owner.getRole() != Role.VENUE_OWNER) {
+            throw new ForbiddenException("Only venue owners have access to this page");
+        }
+        if(venue.getOwner().getUserId() != ownerId){
+            throw new ForbiddenException("You don't own this venue");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
+        Page<Booking> upcomingBookings = bookingRepository.findByVenueVenueIdAndBookingStatusInAndStartDateTimeGreaterThanEqualOrderByStartDateTimeAsc(
+                venueId, List.of(BookingStatus.CONFIRMED, BookingStatus.RESERVED), LocalDateTime.now(), pageable
+        );
+        return upcomingBookings
+                .map(booking -> new VenueBookingResponseDTO(booking));
     }
 }
