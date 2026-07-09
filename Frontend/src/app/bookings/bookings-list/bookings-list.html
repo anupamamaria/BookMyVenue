@@ -1,3 +1,8 @@
+<app-loader
+  *ngIf="loading()"
+  message="Getting your bookings...">
+</app-loader>
+<app-navbar></app-navbar>
 <section class="my-bookings">
   <header class="bookings-header">
     <div>
@@ -8,30 +13,30 @@
     <div class="overview-stats">
       <div class="stat-chip upcoming">
         <span class="label">Upcoming</span>
-        <span class="value">{{ upcomingBookings.length }}</span>
+        <span class="value">{{ upcomingBookings().length }}</span>
       </div>
       <div class="stat-chip past">
         <span class="label">Past</span>
-        <span class="value">{{ pastBookings.length }}</span>
+        <span class="value">{{ pastBookings().length }}</span>
       </div>
     </div>
   </header>
 
   <mat-tab-group class="tabs bookings-tabs">
     <mat-tab label="Upcoming Bookings">
-      <div class="cards-shell" *ngIf="upcomingBookings.length > 0; else upcomingEmpty">
+      <div class="cards-shell" *ngIf="upcomingBookings().length > 0; else upcomingEmpty">
         <div class="booking-grid">
-          <article class="booking-card" *ngFor="let booking of upcomingBookings">
+          <article class="booking-card" *ngFor="let booking of upcomingBookings()">
             <div class="image-wrapper">
-              <img *ngIf="booking.venueImageUrl; else noImage" 
-                   [src]="booking.venueImageUrl" 
+              <img *ngIf="booking.imagePath; else noImage" 
+                   [src]="booking.imagePath" 
                    [alt]="booking.venueName" 
                    class="booking-image" />
               <ng-template #noImage>
                 <div class="booking-image booking-image--placeholder">No Image</div>
               </ng-template>
-              <span class="status-badge" [ngClass]="getStatusClass(booking.status)">
-                {{ booking.status }}
+              <span class="status-badge" [ngClass]="getStatusClass(booking.bookingStatus)">
+                {{ booking.bookingStatus }}
               </span>
             </div>
 
@@ -39,21 +44,23 @@
               <h3>{{ booking.venueName }}</h3>
               <p class="location">
                 <span class="material-symbols-outlined location-icon">location_on</span>
-                {{ booking.venueLocation }}
+                {{ booking.location }}
               </p>
 
               <div class="booking-details">
                 <div class="detail-item">
-                  <span class="detail-label">Date</span>
-                  <span class="detail-value">{{ formatDate(booking.bookingDate) }}</span>
+                  <span class="detail-label">Start Date</span>
+                  <span class="detail-value">{{ booking.startDateTime | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">End Date</span>
+                  <span class="detail-value">{{ booking.endDateTime | date:'dd MMM yyyy' }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Time</span>
-                  <span class="detail-value">{{ booking.startTime }} - {{ booking.endTime }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Guests</span>
-                  <span class="detail-value">{{ booking.guests }} people</span>
+                  <span class="detail-value">{{ booking.startDateTime | date:'hh:mm a' }} -
+                                             {{ booking.endDateTime | date:'hh:mm a' }}
+                  </span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Total</span>
@@ -61,16 +68,11 @@
                 </div>
               </div>
 
-              <div class="special-requests">
-                <p class="requests-label">Special Requests:</p>
-                <p class="requests-text">{{ booking.specialRequests }}</p>
-              </div>
-
               <div class="action-buttons">
                 <button mat-stroked-button 
                         color="primary" 
                         class="action-btn"
-                        [routerLink]="['/venues', booking.venueId]">
+                        >
                   View Venue
                 </button>
                 <button mat-stroked-button 
@@ -98,19 +100,19 @@
     </mat-tab>
 
     <mat-tab label="Past Bookings">
-      <div class="cards-shell" *ngIf="pastBookings.length > 0; else pastEmpty">
+      <div class="cards-shell" *ngIf="pastBookings().length > 0; else pastEmpty">
         <div class="booking-grid">
-          <article class="booking-card past-booking" *ngFor="let booking of pastBookings">
+          <article class="booking-card past-booking" *ngFor="let booking of pastBookings()">
             <div class="image-wrapper">
-              <img *ngIf="booking.venueImageUrl; else noImagePast" 
-                   [src]="booking.venueImageUrl" 
+              <img *ngIf="booking.imagePath; else noImagePast" 
+                   [src]="booking.imagePath" 
                    [alt]="booking.venueName" 
                    class="booking-image" />
               <ng-template #noImagePast>
                 <div class="booking-image booking-image--placeholder">No Image</div>
               </ng-template>
-              <span class="status-badge" [ngClass]="getStatusClass(booking.status)">
-                {{ booking.status }}
+              <span class="status-badge" [ngClass]="getStatusClass(booking.bookingStatus)">
+                {{ booking.bookingStatus }}
               </span>
             </div>
 
@@ -118,44 +120,37 @@
               <h3>{{ booking.venueName }}</h3>
               <p class="location">
                 <span class="material-symbols-outlined location-icon">location_on</span>
-                {{ booking.venueLocation }}
+                {{ booking.location }}
               </p>
 
               <div class="booking-details">
                 <div class="detail-item">
-                  <span class="detail-label">Date</span>
-                  <span class="detail-value">{{ formatDate(booking.bookingDate) }}</span>
+                  <span class="detail-label">Start Date</span>
+                  <span class="detail-value">{{ booking.startDateTime | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">End Date</span>
+                  <span class="detail-value">{{ booking.endDateTime | date:'dd MMM yyyy' }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Time</span>
-                  <span class="detail-value">{{ booking.startTime }} - {{ booking.endTime }}</span>
+                  <span class="detail-value">{{ booking.startDateTime | date:'hh:mm a' }} -
+                                             {{ booking.endDateTime | date:'hh:mm a' }}
+                  </span>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Guests</span>
-                  <span class="detail-value">{{ booking.guests }} people</span>
-                </div>
+                
                 <div class="detail-item">
                   <span class="detail-label">Total</span>
                   <span class="detail-value price">{{ booking.totalPrice | currency:'INR' }}</span>
                 </div>
               </div>
 
-              <div class="special-requests">
-                <p class="requests-label">Special Requests:</p>
-                <p class="requests-text">{{ booking.specialRequests }}</p>
-              </div>
-
               <div class="action-buttons">
                 <button mat-stroked-button 
                         color="primary" 
                         class="action-btn"
-                        [routerLink]="['/venues', booking.venueId]">
+                        >
                   View Venue
-                </button>
-                <button mat-stroked-button 
-                        class="action-btn"
-                        [routerLink]="['/venues', booking.venueId]">
-                  Book Again
                 </button>
               </div>
             </div>

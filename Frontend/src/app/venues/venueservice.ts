@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, tap } from 'rxjs';
-import { Venue, VenueManage, VenueManageSlot, VenueSlot } from '../shared/models/venue';
+import { Venue, VenueManage, VenueManageSlot, VenueSlot, VenueDashboardResponseDTO, PageResponse, Venue1, VenueSlot1, UserDashboardVenueDTO, VenueDetailsDTO, VenueSlotDTO, VenueDashboardFilters } from '../shared/models/venue';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { BookingRequestDTO, OrderRequestDTO } from '../shared/models/booking';
+import { DashboardFilters } from '../shared/models/user';
 
 @Injectable({
   providedIn: 'root',
 })
 export class VenueService {
   private baseUrl: string='';
-  private venues: Venue[] = [
+  private venues: Venue1[] = [
     // Featured
     { id: 1, name: 'Grand Ballroom', location: 'Kochi', price: 5000, rating: 4.88, imageUrl: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400',
       images: [
@@ -180,31 +182,77 @@ export class VenueService {
   ];
 
 
-  private venueSlots: { [venueId: number]: VenueManageSlot[] } = {
+  // private venueSlots: { [venueId: number]: VenueManageSlot[] } = {
+  //   1: [
+  //     { id: 1, startdate: '2026-06-25', enddate: '2026-06-25', start: '09:00', end: '14:00', price: 15000, slotType: 'fixed', isBooked: true,  bookedBy: 'john_doe',  bookingStatus: 'confirmed', guests: 150 },
+  //     { id: 2, startdate: '2026-06-25', enddate: '2026-06-25', start: '15:00', end: '22:00', price: 20000, slotType: 'fixed', isBooked: false },
+  //     { id: 3, startdate: '2026-06-28', enddate: '2026-06-28', start: '10:00', end: '18:00', price: 18000, slotType: 'fixed', isBooked: true,  bookedBy: 'sarah_k',   bookingStatus: 'confirmed', guests: 200 },
+  //     { id: 4, startdate: '2026-07-01', enddate: '2026-07-03', start: '08:00', end: '23:00', price: 50000, slotType: 'fixed', isBooked: false },
+  //   ],
+  //   3: [
+  //     { id: 5, startdate: '2026-06-22', enddate: '2026-06-22', start: '10:00', end: '16:00', price: 8000,  slotType: 'fixed', isBooked: true,  bookedBy: 'mike_r',    bookingStatus: 'pending',   guests: 80 },
+  //     { id: 6, startdate: '2026-06-29', enddate: '2026-06-29', start: '14:00', end: '20:00', price: 8000,  slotType: 'fixed', isBooked: false },
+  //   ],
+  //   4: [
+  //     { id: 7, startdate: '2026-06-24', enddate: '2026-06-24', start: '11:00', end: '22:00', price: 25000, slotType: 'fixed', isBooked: true,  bookedBy: 'priya_m',   bookingStatus: 'confirmed', guests: 250 },
+  //     { id: 8, startdate: '2026-06-30', enddate: '2026-07-01', start: '10:00', end: '22:00', price: 45000, slotType: 'fixed', isBooked: false },
+  //   ],
+  //   5: [
+  //     { id: 9, startdate: '2026-06-23', enddate: '2026-06-23', start: '09:00', end: '17:00', price: 10000, slotType: 'fixed', isBooked: false },
+  //   ],
+  //   6: [
+  //     { id: 10, startdate: '2026-06-26', enddate: '2026-06-26', start: '18:00', end: '23:00', price: 12000, slotType: 'fixed', isBooked: true,  bookedBy: 'rahul_v',   bookingStatus: 'cancelled', guests: 100 },
+  //     { id: 11, startdate: '2026-07-05', enddate: '2026-07-05', start: '10:00', end: '20:00', price: 16000, slotType: 'fixed', isBooked: false },
+  //   ],
+  //   7: [
+  //     { id: 12, startdate: '2026-06-27', enddate: '2026-06-27', start: '09:00', end: '18:00', price: 22000, slotType: 'fixed', isBooked: true,  bookedBy: 'deepa_s',   bookingStatus: 'confirmed', guests: 180 },
+  //     { id: 13, startdate: '2026-07-04', enddate: '2026-07-06', start: '08:00', end: '22:00', price: 60000, slotType: 'fixed', isBooked: false },
+  //   ],
+  // };
+  private flexSlotTemplates: {
+    [venueId: number]: Array<{
+      date: string;
+      windowStart: string;
+      windowEnd: string;
+      minDurationHours: number;
+      bufferMinutes: number;
+      hourlyRate: number;
+      isBooked?: boolean; // legacy: whole window booked (keep for now)
+      bookedRanges?: { startTime: string; endTime: string }[]; // NEW: partial bookings
+    }>
+  } = {
     1: [
-      { id: 1, startdate: '2026-06-25', enddate: '2026-06-25', start: '09:00', end: '14:00', price: 15000, slotType: 'fixed', isBooked: true,  bookedBy: 'john_doe',  bookingStatus: 'confirmed', guests: 150 },
-      { id: 2, startdate: '2026-06-25', enddate: '2026-06-25', start: '15:00', end: '22:00', price: 20000, slotType: 'fixed', isBooked: false },
-      { id: 3, startdate: '2026-06-28', enddate: '2026-06-28', start: '10:00', end: '18:00', price: 18000, slotType: 'fixed', isBooked: true,  bookedBy: 'sarah_k',   bookingStatus: 'confirmed', guests: 200 },
-      { id: 4, startdate: '2026-07-01', enddate: '2026-07-03', start: '08:00', end: '23:00', price: 50000, slotType: 'fixed', isBooked: false },
+      {
+        date: '2026-07-25',
+        windowStart: '09:00', windowEnd: '17:00',
+        minDurationHours: 1, bufferMinutes: 15, hourlyRate: 3500,
+        bookedRanges: [{ startTime: '09:00', endTime: '10:00' }, { startTime: '14:00', endTime: '15:00' }], // <-- your scenario
+      },
+      {
+        date: '2026-07-28',
+        windowStart: '19:00', windowEnd: '23:00',
+        minDurationHours: 2, bufferMinutes: 30, hourlyRate: 4000,
+      },
     ],
     3: [
-      { id: 5, startdate: '2026-06-22', enddate: '2026-06-22', start: '10:00', end: '16:00', price: 8000,  slotType: 'fixed', isBooked: true,  bookedBy: 'mike_r',    bookingStatus: 'pending',   guests: 80 },
-      { id: 6, startdate: '2026-06-29', enddate: '2026-06-29', start: '14:00', end: '20:00', price: 8000,  slotType: 'fixed', isBooked: false },
-    ],
-    4: [
-      { id: 7, startdate: '2026-06-24', enddate: '2026-06-24', start: '11:00', end: '22:00', price: 25000, slotType: 'fixed', isBooked: true,  bookedBy: 'priya_m',   bookingStatus: 'confirmed', guests: 250 },
-      { id: 8, startdate: '2026-06-30', enddate: '2026-07-01', start: '10:00', end: '22:00', price: 45000, slotType: 'fixed', isBooked: false },
+      {
+        date: '2026-07-22',
+        windowStart: '08:00', windowEnd: '14:00',
+        minDurationHours: 1, bufferMinutes: 15, hourlyRate: 1500,
+        isBooked: true,
+      },
+      {
+        date: '2026-07-29',
+        windowStart: '15:00', windowEnd: '21:00',
+        minDurationHours: 2, bufferMinutes: 30, hourlyRate: 1500,
+      },
     ],
     5: [
-      { id: 9, startdate: '2026-06-23', enddate: '2026-06-23', start: '09:00', end: '17:00', price: 10000, slotType: 'fixed', isBooked: false },
-    ],
-    6: [
-      { id: 10, startdate: '2026-06-26', enddate: '2026-06-26', start: '18:00', end: '23:00', price: 12000, slotType: 'fixed', isBooked: true,  bookedBy: 'rahul_v',   bookingStatus: 'cancelled', guests: 100 },
-      { id: 11, startdate: '2026-07-05', enddate: '2026-07-05', start: '10:00', end: '20:00', price: 16000, slotType: 'fixed', isBooked: false },
-    ],
-    7: [
-      { id: 12, startdate: '2026-06-27', enddate: '2026-06-27', start: '09:00', end: '18:00', price: 22000, slotType: 'fixed', isBooked: true,  bookedBy: 'deepa_s',   bookingStatus: 'confirmed', guests: 180 },
-      { id: 13, startdate: '2026-07-04', enddate: '2026-07-06', start: '08:00', end: '22:00', price: 60000, slotType: 'fixed', isBooked: false },
+      {
+        date: '2026-07-23',
+        windowStart: '10:00', windowEnd: '20:00',
+        minDurationHours: 2, bufferMinutes: 0, hourlyRate: 1200,
+      },
     ],
   };
   
@@ -212,21 +260,78 @@ export class VenueService {
     this.baseUrl = 'http://localhost:8080/';
   }
 
-  getVenues(): Observable<Venue[]> {
+  getVenues(): Observable<Venue1[]> {
     return of(this.venues);
   }
 
-  getFeaturedVenues(): Observable<Venue[]> {
+  getVenueDashboard(page: number = 0,size: number = 10,filters: VenueDashboardFilters = {}): Observable<PageResponse<VenueDashboardResponseDTO>> {
+    let params = new HttpParams()
+    .set('page', page)
+    .set('size', size);
+
+    (Object.keys(filters) as (keyof VenueDashboardFilters)[]).forEach(key => {
+      const value = filters[key];
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, value);
+      }
+    });
+    return this.http.get<PageResponse<VenueDashboardResponseDTO>>(
+      `${this.baseUrl}venue/dashboard`, { params }
+    );
+  }
+
+  getUserDashboardVenues(page: number = 0, size: number = 10,filters: DashboardFilters = {}): Observable<PageResponse<UserDashboardVenueDTO>> {
+     let params = new HttpParams()
+    .set('page', page)
+    .set('size', size);
+
+    (Object.keys(filters) as (keyof DashboardFilters)[]).forEach(key => {
+      const value = filters[key];
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+
+    return this.http.get<PageResponse<UserDashboardVenueDTO>>(
+      `${this.baseUrl}user/dashboard`, { params });
+  }
+
+  getFeaturedVenues(): Observable<Venue1[]> {
     return of(this.venues.filter(v => v.featured));
   }
 
-  getVenuesByLocation(location: string): Observable<Venue[]> {
+  getVenuesByLocation(location: string): Observable<Venue1[]> {
     return of(this.venues.filter(v => v.location === location));
   }
 
-  getVenueById(id: number): Observable<Venue | undefined> {
-    return of(this.venues.find(v => v.id === id));
+  getVenueById(id: number, startDate: string , endDate: string): Observable<VenueDetailsDTO | undefined> {
+    return this.http.get<VenueDetailsDTO>(
+        `${this.baseUrl}user/venues/${id}?startDate=${startDate}&endDate=${endDate}`
+    );
   }
+
+  getVenueSlotsById(id: number, startDate: string , endDate: string): Observable<VenueSlotDTO[]> {
+    return this.http.get<VenueSlotDTO[]>(
+        `${this.baseUrl}user/venues/${id}/slots?startDate=${startDate}&endDate=${endDate}`
+    );
+  }
+
+  createBooking(bookingRequest: BookingRequestDTO): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}booking`, bookingRequest);
+  }
+
+  getFlexibleSlotPrice(slotId:number, startDateTime: string, endDateTime: string): Observable<any>{
+    return this.http.get(`${this.baseUrl}user/${slotId}/price?startDateTime=${startDateTime}&endDateTime=${endDateTime}`, {responseType: 'text'})
+  }
+
+  getVenueManage(id: number): Observable<VenueManage> {
+   return this.http.get<VenueManage>(`${this.baseUrl}venue/details/${id}`);
+  }
+  
+  updateSlot(venueId: number, slotId: number, slotData: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}venue/${venueId}/slot/${slotId}`, slotData, { responseType: 'text' });
+  }
+  
 
   searchVenues(
     searchTerm: string = '', 
@@ -237,7 +342,7 @@ export class VenueService {
       outsideCateringAllowed?: boolean;
       carParking?: boolean;
     } = {}
-  ): Observable<Venue[]> {
+  ): Observable<Venue1[]> {
     let results = [...this.venues];
 
     // Filter by search term (name or description)
@@ -275,22 +380,14 @@ export class VenueService {
     return of(results);
   }
 
-  getVenueManage(id: number): Observable<VenueManage> {
-   const venue = this.venues.find(v => v.id === id) ?? this.venues[0];
-   return of({
-     ...venue,
-     userName: 'venue_owner',
-     status: 'approved' as const,
-     slots: this.venueSlots[id] ?? []
-   });
-  }
+  
 
   /**
    * Returns available time slots for a venue across a date range.
    * Daily slots are generated for every day in the range.
    * Multi-day packages are added when the range spans 2+ days.
    */
-  getVenueSlots(venueId: number, startDate: string, endDate: string): Observable<VenueSlot[]> {
+  getVenueSlotsOld(venueId: number, startDate: string, endDate: string): Observable<VenueSlot1[]> {
     const venue = this.venues.find(v => v.id === venueId);
     if (!venue) return of([]);
 
@@ -301,7 +398,7 @@ export class VenueService {
       { start: '09:00', end: '23:00', multiplier: 1.0 },
     ];
 
-    const slots: VenueSlot[] = [];
+    const slots: VenueSlot1[] = [];
     let slotId = venueId * 1000;
 
     // Daily slots for each day in the range
@@ -368,6 +465,112 @@ export class VenueService {
     return of(slots);
   }
 
+  getVenueSlots(venueId: number, startDate: string, endDate: string): Observable<VenueSlot1[]> {
+    const venue = this.venues.find(v => v.id === venueId);
+    if (!venue) return of([]);
+
+    const dailyFixedTemplates: { start: string; end: string; multiplier: number }[] = [
+      { start: '09:00', end: '13:00', multiplier: 0.6 },
+      { start: '14:00', end: '18:00', multiplier: 0.6 },
+      { start: '19:00', end: '23:00', multiplier: 0.7 },
+      { start: '09:00', end: '23:00', multiplier: 1.0 },
+    ];
+
+    const slots: VenueSlot1[] = [];
+    let slotId = venueId * 1000;
+
+    const startMs = new Date(startDate + 'T00:00:00').getTime();
+    const endMs   = new Date(endDate   + 'T00:00:00').getTime();
+    const current = new Date(startDate + 'T00:00:00');
+
+    // Fixed daily slots
+    while (current.getTime() <= endMs) {
+      const dateStr = this.toIso(current);
+      const day = current.getDate();
+
+      dailyFixedTemplates.forEach((t, i) => {
+        slotId++;
+        slots.push({
+          id: slotId,
+          venueId,
+          date: dateStr,
+          startTime: t.start,
+          endTime: t.end,
+          price: Math.round((venue.price * t.multiplier) / 100) * 100,
+          available: (day + venueId + i) % 4 !== 0,
+          slotType: 'fixed',
+        });
+      });
+
+      // Flexible slots for this date (from template)
+      const flexForDate = (this.flexSlotTemplates[venueId] ?? [])
+        .filter(f => f.date === dateStr);
+
+      flexForDate.forEach(f => {
+        slotId++;
+        const available = !f.isBooked && this.hasFreeWindow(
+          f.windowStart, f.windowEnd, f.bufferMinutes, f.minDurationHours, f.bookedRanges
+        );
+        // startTime/endTime on a flexible slot represent the window, same as flexConfig
+        slots.push({
+          id: slotId,
+          venueId,
+          date: dateStr,
+          startTime: f.windowStart,
+          endTime: f.windowEnd,
+          // Price shown in the card is the minimum bookable amount
+          price: f.hourlyRate * f.minDurationHours,
+          available: !f.isBooked,
+          slotType: 'flexible',
+          flexConfig: {
+            windowStart: f.windowStart,
+            windowEnd: f.windowEnd,
+            minDurationHours: f.minDurationHours,
+            bufferMinutes: f.bufferMinutes,
+            hourlyRate: f.hourlyRate,
+            bookedRanges: f.bookedRanges,
+          },
+          // Default selection: min duration starting at window open
+          selectedStartTime: f.windowStart,
+          selectedDurationHours: f.minDurationHours,
+        });
+      });
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    // Multi-day packages
+    const daysDiff = Math.round((endMs - startMs) / 86400000) + 1;
+
+    if (daysDiff >= 2) {
+      const day2 = new Date(startDate + 'T00:00:00');
+      day2.setDate(day2.getDate() + 1);
+      slotId++;
+      slots.push({
+        id: slotId, venueId,
+        date: startDate, endDate: this.toIso(day2),
+        startTime: '09:00', endTime: '22:00',
+        price: Math.round((venue.price * 1.8) / 100) * 100,
+        available: (new Date(startDate + 'T00:00:00').getDate() + venueId) % 3 !== 0,
+        slotType: 'multiday', durationDays: 2,
+      });
+    }
+
+    if (daysDiff >= 3) {
+      slotId++;
+      slots.push({
+        id: slotId, venueId,
+        date: startDate, endDate: endDate,
+        startTime: '09:00', endTime: '22:00',
+        price: Math.round((venue.price * daysDiff * 0.85) / 100) * 100,
+        available: true,
+        slotType: 'multiday', durationDays: daysDiff,
+      });
+    }
+    console.log('slots for venue', venueId, 'from', startDate, 'to', endDate, slots);
+    return of(slots);
+  }
+
   private toIso(date: Date): string {
     const y = date.getFullYear();
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -385,19 +588,47 @@ export class VenueService {
   }
 
   uploadImages(venueId: number, images: File[], profileIndex: number): Observable<any> {
-
     const formData = new FormData();
-
     images.forEach(file => {
       formData.append('images', file);
     });
 
     formData.append('profileIndex', profileIndex.toString());
+    return this.http.post(`${this.baseUrl}venue/${venueId}/images`,formData,{ responseType: 'text' });
+  }
 
-    return this.http.post(
-    `${this.baseUrl}venue/${venueId}/images`,
-    formData,
-    { responseType: 'text' }
-    );
+  private hasFreeWindow(
+    windowStart: string, windowEnd: string,
+    bufferMinutes: number, minDurationHours: number,
+    bookedRanges?: { startTime: string; endTime: string }[]
+  ): boolean {
+    const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const winStart = toMin(windowStart);
+    const winEnd = toMin(windowEnd);
+
+    if (!bookedRanges || bookedRanges.length === 0) {
+      return winEnd - winStart >= minDurationHours * 60;
+    }
+
+    const blocked = bookedRanges
+      .map(b => ({
+        start: Math.max(winStart, toMin(b.startTime) - bufferMinutes),
+        end: Math.min(winEnd, toMin(b.endTime) + bufferMinutes),
+      }))
+      .sort((a, b) => a.start - b.start);
+
+    const merged: { start: number; end: number }[] = [];
+    for (const b of blocked) {
+      const last = merged[merged.length - 1];
+      if (last && b.start <= last.end) last.end = Math.max(last.end, b.end);
+      else merged.push({ ...b });
+    }
+
+    let cursor = winStart;
+    for (const b of merged) {
+      if (b.start - cursor >= minDurationHours * 60) return true;
+      cursor = Math.max(cursor, b.end);
+    }
+    return winEnd - cursor >= minDurationHours * 60;
   }
 }

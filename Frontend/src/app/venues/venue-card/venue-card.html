@@ -1,12 +1,11 @@
-<a [routerLink]="['/venues', venue.id]" class="venue-card">
+<a [routerLink]="['/venues', venue.venueId]" class="venue-card">
   <div class="venue-image-wrapper">
-    <img [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
-    <span *ngIf="venue.featured" class="badge-featured">Featured</span>
+    <img [src]="venue.imagePath" [alt]="venue.name" class="venue-image" />
   </div>
   <div class="venue-info">
     <div class="venue-header">
       <h6 class="venue-name">{{ venue.name }}</h6>
-      <span class="venue-rating">&#9733; {{ venue.rating }}</span>
+      <!-- <span class="venue-rating">&#9733; {{ venue.rating }}</span> -->
     </div>
     <p class="venue-location">
       <mat-icon>place</mat-icon>
@@ -14,6 +13,5 @@
     <p class="venue-capacity">
       <mat-icon>group</mat-icon>
       Up to {{ venue.capacity }} guests</p>
-    <p class="venue-price"><strong>{{ venue.price | currency:'INR' }}</strong> per event</p>
   </div>
 </a>

@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,15 +10,24 @@ import { User } from '../models/user';
 import { Login } from '../../auth/login/login';
 import { Signup } from '../../auth/signup/signup';
 import { Profile } from '../../auth/profile/profile';
+import { DateRange, MatDatepickerModule, MatDateRangeInput } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { provideNativeDateAdapter } from '@angular/material/core';
+
 
 @Component({
   selector: 'app-navbar-home',
-  imports: [CommonModule, RouterLink, FormsModule, MatCheckboxModule],
+  imports: [CommonModule, RouterLink, FormsModule, MatCheckboxModule,
+            MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  providers: [provideNativeDateAdapter()],
   templateUrl: './navbar-home.html',
   styleUrl: './navbar-home.scss',
 })
 export class NavbarHome implements OnInit {
   showUserMenu = false;
+  today = new Date();
+  @ViewChild(MatDateRangeInput) rangeInput!: MatDateRangeInput<Date>;
 
   constructor(
     public search: SearchService,
@@ -26,7 +35,9 @@ export class NavbarHome implements OnInit {
     private el: ElementRef,
     private dialog: MatDialog,
     private router: Router
-  ) {}
+  ) {
+    this.today.setHours(0, 0, 0, 0);
+  }
 
   ngOnInit(): void {
   }
@@ -48,6 +59,19 @@ export class NavbarHome implements OnInit {
     }
   }
 
+  onPickerClosed() {
+  const value = this.rangeInput.value;
+
+  if (!value?.start) {
+    this.search.startDate.set(null);
+    this.search.endDate.set(null);
+    return;
+  }
+
+  this.search.startDate.set(value.start);
+  this.search.endDate.set(value.end ?? value.start);
+}
+
   logout(): void {
     this.authService.logout();
     this.showUserMenu = false;
@@ -58,8 +82,21 @@ export class NavbarHome implements OnInit {
     this.showUserMenu = false;
     const ref = this.dialog.open(Login, { width: '420px', panelClass: 'auth-dialog' });
     ref.afterClosed().subscribe(result => { 
+      console.log('Login dialog closed with result:', result);
       if (result.action === 'signup') 
         this.openSignupDialog(); 
+      if(result?.action === 'login-success') {
+        //check the role of the user and navigate accordingly
+        if(result.user.role === 'VENUE_OWNER') {
+          this.router.navigate(['/venues']);
+        } 
+        else if (result.user.role === 'ADMIN') {
+          this.router.navigate(['/admin']);
+        }
+        else {
+          this.router.navigate(['/']);
+        }
+      }
     });
   }
 

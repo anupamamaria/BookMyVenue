@@ -18,6 +18,33 @@
         <input type="text" [(ngModel)]="search.searchTerm" placeholder="Search venues" class="search-input" />
       </div>
       <div class="search-field-divider"></div>
+      <div class="search-field-wrapper when-field">
+        <label><strong>When</strong></label>
+
+        <div class="date-display" (click)="picker.open()">
+          {{ search.startDate() && search.endDate()
+              ? (search.startDate() | date:'dd MMM') + ' - ' + (search.endDate() | date:'dd MMM')
+              : 'Add dates' }}
+        </div>
+      
+        <mat-date-range-input
+            [rangePicker]="picker"
+            class="hidden-range-input" [min]="today">
+      
+          <input
+            matStartDate
+            [ngModel]="search.startDate()">
+
+          <input
+            matEndDate
+            [ngModel]="search.endDate()">
+      
+        </mat-date-range-input>
+      
+        <mat-date-range-picker #picker (closed)="onPickerClosed()"></mat-date-range-picker>
+      </div>
+
+      <div class="search-field-divider"></div>
       <div class="search-field-wrapper">
         <label><strong>Guests</strong></label>
         <input type="number" [(ngModel)]="search.searchGuests" placeholder="Add guests" class="search-input" min="0" />
@@ -27,10 +54,6 @@
       </button>
     </div>
     <div class="search-actions">
-      <button class="filter-toggle-btn" (click)="search.toggleFilters()">
-        <span class="material-symbols-outlined">tune</span>
-        Filters
-      </button>
       <button class="clear-btn" *ngIf="search.isSearchActive$ | async" (click)="search.clearSearch()">
         <span class="material-symbols-outlined">close</span>
         Clear
@@ -62,13 +85,13 @@
         <a class="dropdown-item" (click)="openLoginDialog()"><strong>Log in or Signup</strong></a>
       </ng-container>
       <ng-container *ngIf="isLoggedIn">
-        <a class="dropdown-item" (click)="openProfileDialog()">
+        <!-- <a class="dropdown-item" (click)="openProfileDialog()">
           <span class="material-symbols-outlined">person</span>My Profile
-        </a>
-        <a routerLink="/bookings" class="dropdown-item" (click)="showUserMenu = false">
+        </a> -->
+        <a routerLink="/bookings" class="dropdown-item" (click)="showUserMenu = false" *ngIf="currentUser?.role === 'USER'">
           <span class="material-symbols-outlined">calendar_month</span>My Bookings
         </a>
-        <hr class="dropdown-divider" />
+        
         <a class="dropdown-item" (click)="logout()">
           <span class="material-symbols-outlined">logout</span>Log out
         </a>
@@ -76,21 +99,3 @@
     </div>
   </div>
 </nav>
-
-<!-- Amenity Filters (slides out below nav) -->
-<div class="filters-panel" *ngIf="search.showFilters">
-  <div class="filters-container">
-    <h3 class="filters-title">Filter by Amenities</h3>
-    <div class="amenity-filters">
-      <mat-checkbox [(ngModel)]="search.filterSwimmingPool" (change)="search.onFilterChange()" class="amenity-checkbox">
-        <span class="material-symbols-outlined amenity-icon">pool</span> Swimming Pool
-      </mat-checkbox>
-      <mat-checkbox [(ngModel)]="search.filterOutsideCatering" (change)="search.onFilterChange()" class="amenity-checkbox">
-        <span class="material-symbols-outlined amenity-icon">restaurant</span> Outside Catering Allowed
-      </mat-checkbox>
-      <mat-checkbox [(ngModel)]="search.filterCarParking" (change)="search.onFilterChange()" class="amenity-checkbox">
-        <span class="material-symbols-outlined amenity-icon">local_parking</span> Car Parking
-      </mat-checkbox>
-    </div>
-  </div>
-</div>

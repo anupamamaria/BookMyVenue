@@ -1,0 +1,64 @@
+.booking-banner {
+  width: min(1310px, 95%);
+  margin: 24px auto;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: #ffecef;
+  border: 1px solid #ffb8ca;
+
+  border-radius: 18px;
+
+  box-shadow: 0 8px 20px rgba(230, 30, 77, 0.08)
+}
+.banner-image {
+  width: 140px;
+  height: 100px;
+  border-radius: 16px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.banner-content {
+  flex: 1;
+}
+
+.banner-label {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #ffe5ec;
+  color: #e61e4d;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.banner-content h3 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #222;
+}
+.banner-info {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+
+  color: #666;
+  font-size: 15px;
+}
+.banner-info span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.banner-info .material-symbols-outlined {
+  font-size: 18px;
+  color: #e61e4d;
+}
+button {
+  height: 44px;
+  border-radius: 12px;
+  padding: 0 24px;
+}
