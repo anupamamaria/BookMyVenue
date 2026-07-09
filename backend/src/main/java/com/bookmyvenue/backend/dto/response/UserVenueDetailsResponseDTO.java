@@ -1,35 +1,37 @@
 package com.bookmyvenue.backend.dto.response;
 
 import com.bookmyvenue.backend.entity.Venue;
-import com.bookmyvenue.backend.enums.VenueStatus;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import java.time.LocalDateTime;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
-public class VenueDetailsResponseDTO {
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserVenueDetailsResponseDTO {
 
     private Long venueId;
     private String name;
     private String type;
-    private String address;
     private String location;
-    private int capacity;
+    private String address;
+    private Integer capacity;
     private boolean carParking;
     private boolean swimmingPool;
     private boolean outsideServicesAllowed;
     private boolean cateringProvided;
     private String additional;
-    private VenueStatus venueStatus;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private List<SlotResponseDTO> slots;
+
     private List<VenueImageResponseDTO> imagePaths;
 
-    public VenueDetailsResponseDTO(
+    private List<UserSlotResponseDTO> slots;
+
+    public UserVenueDetailsResponseDTO(
             Venue venue,
             List<VenueImageResponseDTO> imagePaths,
-            List<SlotResponseDTO> slots
+            List<UserSlotResponseDTO> slots
     ) {
         this.venueId = venue.getVenueId();
         this.name = venue.getName();
@@ -42,11 +44,8 @@ public class VenueDetailsResponseDTO {
         this.outsideServicesAllowed = venue.isOutsideServicesAllowed();
         this.cateringProvided = venue.isCateringProvided();
         this.additional = venue.getAdditional();
-        this.venueStatus = venue.getVenueStatus();
-        this.createdAt = venue.getCreatedAt();
-        this.updatedAt = venue.getUpdatedAt();
 
         this.imagePaths = imagePaths;
         this.slots = slots;
     }
-    }
+}
