@@ -1,17 +1,25 @@
 export interface Booking {
-  id: number;
+  bookingId: number,
+  venueName: string,
+  location: string,
+  startDateTime: string,
+  endDateTime: string,
+  totalPrice: number,
+  bookingStatus?: string,
+  imagePath?:string
+}
+
+export const RazorPayment = {
+  razorpayKey: 'rzp_test_T71Ifrp2xFrEPh',
+};
+
+export interface BookingRequestDTO {
   venueId: number;
-  venueName: string;
-  venueLocation: string;
-  venueImageUrl: string;
-  userId: number;
-  userName: string;
-  bookingDate: string; // ISO date string
-  startTime: string;
-  endTime: string;
-  totalPrice: number;
-  status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
-  guests: number;
-  specialRequests?: string;
-  createdAt: string;
+  slotId: number;
+  startDateTime: string; // ISO date string
+  endDateTime: string;
+}
+
+export interface OrderRequestDTO {
+  bookingId: number;
 }

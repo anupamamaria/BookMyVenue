@@ -341,53 +341,24 @@
   &:hover { background: #ffe0e5; }
 }
 
-// ==========================================
-// PAGINATOR
-// ==========================================
+.cards-shell {
+  padding: 12px;
+}
 
-.paginator-wrapper {
+.loading-more {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 28px;
-  padding: 10px 4px 4px;
-  border-top: 1px solid #f0f0f0;
+  gap: 12px;
+
+  padding: 20px;
+  width: 100%;
+
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-::ng-deep .paginator-wrapper {
-  .mat-mdc-paginator {
-    background: transparent;
-
-    .mat-mdc-paginator-container {
-      padding: 0;
-      min-height: unset;
-    }
-
-    .mat-mdc-paginator-range-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: #717171;
-      margin: 0 8px;
-    }
-
-    .mat-mdc-icon-button {
-      width: 34px;
-      height: 34px;
-      padding: 5px;
-      border-radius: 8px;
-      transition: background 0.15s;
-
-      &:not([disabled]):hover {
-        background: #f0f0f0;
-      }
-
-      &[disabled] {
-        opacity: 0.3;
-      }
-    }
-  }
-}
 
 @media (max-width: 992px) {
   .venue-dashboard {
@@ -422,9 +393,7 @@
     }
   }
 
-  .cards-shell {
-    padding: 12px;
-  }
+  
 
   .venue-grid {
     grid-template-columns: 1fr;

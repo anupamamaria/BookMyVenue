@@ -1,9 +1,19 @@
 <app-loader
   *ngIf="loading()"
-  message="Loading your venues...">
+   message="Loading your venues...">
 </app-loader>
 
-<app-navbar></app-navbar>
+<app-navbar
+  mode="venue-filters"
+  [locations]="locations"
+  [filterLocation]="filterLocation"
+  [filterType]="filterType"
+  [filterStatus]="filterStatus"
+  [totalElements]="totalElements"
+  [hasActiveFilters]="hasActiveFilters"
+  (searchClicked)="onSearch($event)"
+  (filtersCleared)="clearFilters()">
+</app-navbar>
 
 <section class="venue-dashboard">
   <header class="venue-header">
@@ -18,76 +28,18 @@
     </div>
   </header>
 
-  <!-- FILTER BAR (collapsible) -->
-  <div class="filter-bar" [class.filter-bar--open]="filtersOpen">
-  
-    <!-- Collapsed summary row (always visible) -->
-    <div class="filter-summary" (click)="filtersOpen = !filtersOpen">
-      <span class="filter-summary__left">
-        <mat-icon class="filter-icon">tune</mat-icon>
-        <span class="filter-summary__label">Filters</span>
-        <span class="filter-summary__active-tags" *ngIf="!filtersOpen && activeFilterSummary">
-          &nbsp;·&nbsp;{{ activeFilterSummary }}
-        </span>
-        <span class="filter-summary__placeholder" *ngIf="!filtersOpen && !activeFilterSummary">
-          &nbsp;·&nbsp;Location: All &nbsp;·&nbsp; Type: All &nbsp;·&nbsp; Status: All
-        </span>
-      </span>
-    
-      <span class="filter-summary__right">
-        <span class="filter-active-dot" *ngIf="hasActiveFilters"></span>
-        <span class="result-count">
-          <mat-icon>grid_view</mat-icon>
-          {{ filteredVenues.length }} venue{{ filteredVenues.length !== 1 ? 's' : '' }}
-        </span>
-        <mat-icon class="chevron-icon">{{ filtersOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </span>
-    </div>
-  
-    <!-- Expanded controls (hidden when collapsed) -->
-    <div class="filter-controls" *ngIf="filtersOpen">
-      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
-        <mat-label>Location</mat-label>
-        <mat-select [(ngModel)]="filterLocation" (ngModelChange)="applyFilters()">
-          <mat-option value="">All</mat-option>
-          <mat-option *ngFor="let loc of locations" [value]="loc">{{ loc }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-    
-      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
-        <mat-label>Venue Type</mat-label>
-        <mat-select [(ngModel)]="filterType" (ngModelChange)="applyFilters()">
-          <mat-option value="">All</mat-option>
-          <mat-option *ngFor="let t of venueTypes" [value]="t.value">{{ t.label }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-    
-      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
-        <mat-label>Status</mat-label>
-        <mat-select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
-          <mat-option value="">All</mat-option>
-          <mat-option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-    
-      <button mat-button class="clear-btn" *ngIf="hasActiveFilters" (click)="clearFilters()">
-        <mat-icon>restart_alt</mat-icon> Reset
-      </button>
-    </div>
-  </div>
-
-  <div class="cards-shell" *ngIf="pagedVenues.length > 0; else venueEmpty">
+  <div class="cards-shell" *ngIf="venues().length > 0; else venueEmpty">
     <div class="venue-grid">
-      <article class="venue-card" *ngFor="let venue of pagedVenues"
-               [routerLink]="['/venues/manage', venue.id]"
+      <article class="venue-card" *ngFor="let venue of venues()"
+               [routerLink]="['/venues/manage', venue.venueId]"
                role="link"
                tabindex="0">
         <div class="image-wrapper">
-          <img *ngIf="venue.imageUrl; else pendingNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
+          <img *ngIf="venue.imagePath; else pendingNoImage" [src]="venue.imagePath" [alt]="venue.name" class="venue-image" />
           <ng-template #pendingNoImage>
             <div class="venue-image venue-image--placeholder">No Image</div>
           </ng-template>
-          <span class="status-badge" [ngClass]="venue.status">{{ venue.status }}</span>
+          <span class="status-badge" [ngClass]="venue.venueStatus.toLowerCase()">{{ venue.venueStatus }}</span>
         </div>
         <div class="card-content">
           <h3>{{ venue.name }}</h3>
@@ -96,27 +48,24 @@
               <mat-icon>place</mat-icon>{{ venue.location }}
             </span>
             <span class="meta-item">
-              <mat-icon>group</mat-icon>{{ venue.capacity }} guests
+              <mat-icon>group</mat-icon>500 guests
             </span>
           </div>
         </div>
       </article>
-    </div>
-
-    <!-- PAGINATOR -->
-    <div class="paginator-wrapper">
-      <mat-paginator
-        [length]="filteredVenues.length"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="[5, 10, 20]"
-        [pageIndex]="pageIndex"
-        (page)="onPageChange($event)"
-        showFirstLastButtons>
-      </mat-paginator>
     </div>
   </div>
 
   <ng-template #venueEmpty>
     <p class="empty-state">No venues match your filters.</p>
   </ng-template>
+
+  <div class="loading-more" *ngIf="loadingMore()">
+    <mat-spinner
+      diameter="24"
+      strokeWidth="3"
+      class="loading-spinner">
+    </mat-spinner>
+    <span>Loading more venues...</span>
+  </div>
 </section>

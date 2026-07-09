@@ -20,6 +20,8 @@ import { MatTimepickerModule } from '@angular/material/timepicker';
 import { signal } from '@angular/core';
 import { Loader } from '../../shared/loader/loader';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ErrorDialog, ErrorDialogData } from '../../shared/error-dialog/error-dialog';
 
 export interface ImagePreview {
   file: File;
@@ -54,7 +56,8 @@ export class VenueCreate  implements OnInit {
   loading = signal(false);
   
   constructor(private fb: FormBuilder, private snackBar: MatSnackBar, 
-              private venueService: VenueService, private router: Router) {}
+              private venueService: VenueService, private router: Router,
+              private dialog: MatDialog) {}
 
   ngOnInit(): void {
 
@@ -99,7 +102,7 @@ export class VenueCreate  implements OnInit {
       const minSlotPriceCtrl = this.slotAddForm.get('minSlotPrice');
       const bufferTimeCtrl = this.slotAddForm.get('bufferTime');
 
-      if (slotType === 'flexible') {
+      if (slotType === 'FLEXIBLE') {
         minSlotTimeCtrl?.setValidators([Validators.required, Validators.min(1)]);
         maxSlotTimeCtrl?.setValidators([Validators.required, Validators.min(1)]);
         minSlotPriceCtrl?.setValidators([Validators.required, Validators.min(0)]);
@@ -221,6 +224,7 @@ export class VenueCreate  implements OnInit {
           slotType: form.slotType,
           minSlotTime: slot.minSlotTime,
           maxSlotTime: slot.maxSlotTime,
+          minSlotPrice: slot.minSlotPrice,
           bufferTime: slot.bufferTime,
           totalSlotPrice: slot.price
         };
@@ -246,7 +250,7 @@ export class VenueCreate  implements OnInit {
         //reroute to venue list page after short delay to show snackbar
         setTimeout(() => {
           this.router.navigate(['/venues']);
-        }, 2000);
+        }, 0);
       },
       error: (error) => {
         console.log('Error creating venue', error);
@@ -255,7 +259,10 @@ export class VenueCreate  implements OnInit {
       }
     });
   }
-
+  cancelWizard(): void {
+    this.router.navigate(['/venues']);
+  }
+  
   private combineDateAndTime(date: Date, time: Date): string {
     const result = new Date(date);
     
@@ -387,7 +394,7 @@ export class VenueCreate  implements OnInit {
       return;
     }
 
-    if (slotType === 'flexible') {
+    if (slotType === 'FLEXIBLE') {
       if (slotForm.minSlotTime <= 0) {
         this.openSnackBar('Minimum slot time must be greater than 0.');
         return;
@@ -423,7 +430,7 @@ export class VenueCreate  implements OnInit {
       end: [slotForm.end, Validators.required],
       price: [slotForm.price, [Validators.required, Validators.min(0)]],
     };
-    if (slotType === 'flexible') {
+    if (slotType === 'FLEXIBLE') {
       slotGroup.minSlotTime = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
       slotGroup.maxSlotTime = [slotForm.maxSlotTime, [Validators.required, Validators.min(1)]];
       slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
@@ -446,6 +453,7 @@ export class VenueCreate  implements OnInit {
 
     return dates;
   }
+  
   
   sortSlots() {
     this.slots.controls.sort((a, b) => {
