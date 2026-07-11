@@ -10,7 +10,10 @@
 
   <!-- Hero Image -->
   <div class="detail-hero">
-    <img [src]="heroImages()[heroIndex()]" [alt]="venue.name" class="detail-image" />
+    <div class="detail-image-wrap">
+      <img [src]="heroImages()[heroIndex()]" [alt]="venue.name" class="detail-image-bg" />
+      <img [src]="heroImages()[heroIndex()]" [alt]="venue.name" class="detail-image-fg" />
+    </div>
     <div class="hero-overlay"></div>
 
     <!-- Prev button -->

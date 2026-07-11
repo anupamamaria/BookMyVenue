@@ -1,10 +1,10 @@
 <app-navbar-home></app-navbar-home>
-<app-booking-banner
+
+<main class="dashboard-content" [class.side-by-side]="isLoggedIn">
+  <app-booking-banner
     *ngIf="isLoggedIn && upcomingBooking()"
     [booking]="upcomingBooking()!">
 </app-booking-banner>
-<main class="dashboard-content" [class.side-by-side]="isLoggedIn">
-
   <!-- Search results: flat grid -->
   <section class="venue-section" *ngIf="isSearchActive$ | async">
     <div class="section-header">

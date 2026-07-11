@@ -43,6 +43,21 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  margin-right: 10px;
+  &:hover {
+    background: #d94f3b;
+  }
+}
+
+.cancel-btn {
+  background: #e8604c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 
   &:hover {
     background: #d94f3b;

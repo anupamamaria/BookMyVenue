@@ -43,12 +43,31 @@
   position: relative;
   border-radius: 16px;
   overflow: hidden;
-  height: 440px;
+  height: 300px;
 
-  .detail-image {
+  .detail-image-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .detail-image-bg {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    filter: blur(24px) brightness(0.75) saturate(1.1);
+    transform: scale(1.15); // avoids the sharp blurred edge showing at the border
+  }
+
+  .detail-image-fg {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 1;
   }
 
   .hero-overlay {
