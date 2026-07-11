@@ -121,6 +121,21 @@ export class NavbarHome implements OnInit {
       : this.currentUser.name.slice(0, 2).toUpperCase();
   }
 
+  get homeRoute(): string {
+    const role = this.authService.currentUser()?.role;
+
+    switch (role) {
+      case 'VENUE_OWNER':
+        return '/venues';
+
+      case 'ADMIN':
+        return '/admin';
+
+      default:
+        return '/';
+    }
+  }
+
   get avatarColor(): string {
     const colors = ['#e8604c','#5c6bc0','#26a69a','#ff7043','#42a5f5','#ab47bc','#66bb6a','#ffa726'];
     const name = this.currentUser?.name ?? '';

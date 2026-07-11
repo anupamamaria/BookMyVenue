@@ -1,22 +1,3 @@
-export interface Venue1 {
-  id: number;
-  name: string;
-  location: string;
-  venueType?: 'auditorium' | 'exhibitionHall' | 'cafe';
-  price: number;
-  rating: number;
-  imageUrl: string;
-  images?: string[];
-  capacity: number;
-  description: string;
-  featured?: boolean;
-  amenities?: {
-    swimmingPool?: boolean;
-    outsideCateringAllowed?: boolean;
-    carParking?: boolean;
-  };
-}
-
 export interface Venue {
   id: number;
   name: string;
@@ -64,60 +45,6 @@ export interface VenueSlot {
   bufferTime: string;
   totalSlotPrice: number;
   slotStatus?: string;  // only for multiday slots
-}
-
-export interface VenueSlot1 {
-  id: number;
-  venueId: number;
-  date: string;           // start date 'YYYY-MM-DD'
-  endDate?: string;       // end date for multi-day slots 'YYYY-MM-DD'
-  startTime: string;      // '09:00'
-  endTime: string;        // '22:00'
-  price: number;
-  available: boolean;
-  slotType: 'fixed' | 'flexible' | 'multiday';
-  durationDays?: number;  // only for multiday slots
-  // Only present when slotType === 'flexible'
-  flexConfig?: {
-    windowStart: string;    // '10:00' — earliest possible start
-    windowEnd: string;      // '22:00' — latest possible end
-    minDurationHours: number;
-    bufferMinutes: number;
-    hourlyRate: number;
-    bookedRanges?: { startTime: string; endTime: string }[];
-  };
-
-  // Set by the user when they customise a flexible slot
-  selectedStartTime?: string;
-  selectedDurationHours?: number;
-}
-
-export interface VenueManageSlot1 {
-  id: number;
-  startdate: string;
-  enddate: string;
-  start: string;
-  end: string;
-  price: number;
-  slotType: 'fixed' | 'flexible';
-  isBooked: boolean;
-  bookedBy?: string;
-  bookingStatus?: 'confirmed' | 'pending' | 'cancelled';
-  guests?: number;
-
-  // Only for flexible slots
-  minDurationHours?: number;
-  bufferMinutes?: number;
-  hourlyRate?: number;
-}
-
-export interface VenueManage1 extends VenueAdmin {
-  slots: VenueManageSlot[];
-}
-
-export interface VenueAdmin extends Venue1 {
-  userName: string;
-  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface VenueManageSlot {
@@ -269,6 +196,30 @@ export interface VenueDashboardFilters {
   location?: string;
   type?: string;
   venueStatus?: string; // 'PENDING' | 'APPROVED' | 'REJECTED'
+}
+
+export enum BookingStatus {
+  RESERVED = 'RESERVED',
+  CONFIRMED = 'CONFIRMED',
+  PAYMENT_FAILED = 'PAYMENT_FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+  SUCCESS = 'SUCCESS',
+}
+
+export interface VenueBookingResponseDTO {
+  bookingId: number;
+  userName: string;
+  userEmail: string;
+  startDateTime: string; // ISO
+  endDateTime: string;   // ISO
+  totalPrice: number;
+  bookingStatus: BookingStatus;
+  paymentStatus: PaymentStatus;
 }
 
 export interface PageResponse<T> {

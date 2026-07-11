@@ -2,7 +2,7 @@ import { Component, OnInit, ElementRef, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VenueService } from '../venues/venueservice';
 import { SearchService } from '../shared/search.service';
-import { UserDashboardVenueDTO, Venue, Venue1, VenueSection } from '../shared/models/venue';
+import { UserDashboardVenueDTO, VenueSection } from '../shared/models/venue';
 import { VenueCard } from '../venues/venue-card/venue-card';
 import { NavbarHome } from '../shared/navbar-home/navbar-home';
 import { Authservice } from '../auth/authservice';

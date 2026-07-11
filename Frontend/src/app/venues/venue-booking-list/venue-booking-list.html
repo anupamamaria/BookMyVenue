@@ -1,0 +1,56 @@
+<div class="booking-list">
+  <div class="booking-list__empty" *ngIf="rows.length === 0 && !loading">
+    <div class="booking-list__empty-icon">
+      <mat-icon>{{ variant === 'upcoming' ? 'event_available' : 'history' }}</mat-icon>
+      <p class="booking-list__empty-title">
+        {{ variant === 'upcoming' ? 'No upcoming bookings' : 'No past bookings yet' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="booking-row" *ngFor="let b of rows">
+    <div class="booking-row__main">
+      <div class="booking-row__date">
+        <mat-icon>calendar_today</mat-icon>
+        <span>{{ b.dateLabel }}</span>
+        <span class="multi-day-badge" *ngIf="b.isMultiDay">multi-day</span>
+      </div>
+      <div class="booking-row__time">
+        <mat-icon>schedule</mat-icon>
+        <span>{{ b.timeLabel }}</span>
+      </div>
+    </div>
+
+    <div class="booking-row__guest">
+      <mat-icon>person</mat-icon>
+      <div>
+        <div class="booking-row__name">{{ b.userName }}</div>
+        <div class="booking-row__email">{{ b.userEmail }}</div>
+      </div>
+    </div>
+
+    <div class="booking-row__price">{{ b.totalPrice | currency:'INR':'symbol':'1.0-0' }}</div>
+
+    <div class="booking-row__status">
+      <span class="status-tag"
+            [style.color]="bookingStatusColor(b.bookingStatus)"
+            [style.background]="bookingStatusColor(b.bookingStatus) + '1a'">
+        <mat-icon>event</mat-icon>{{ b.bookingStatus }}
+      </span>
+      <span class="status-tag"
+            [style.color]="paymentStatusColor(b.paymentStatus)"
+            [style.background]="paymentStatusColor(b.paymentStatus) + '1a'">
+        <mat-icon>payments</mat-icon>{{ b.paymentStatus }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading spinner shown while a page is being fetched -->
+  <div class="booking-list__loading" *ngIf="loading">
+    <mat-icon class="spin">progress_activity</mat-icon>
+    <span>Loading more…</span>
+  </div>
+
+  <!-- Invisible trigger — IntersectionObserver watches this -->
+  <div #sentinel class="booking-list__sentinel"></div>
+</div>
