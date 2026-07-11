@@ -1,5 +1,5 @@
+<app-navbar></app-navbar>
 <div class="manage-page" *ngIf="venue() as venue; else loading">
-
   <!-- Nav bar -->
   <nav class="manage-nav">
     <button mat-button class="back-btn" routerLink="/venues">
@@ -8,7 +8,7 @@
     </button>
   
     <!-- NEW ↓ -->
-    <button mat-raised-button class="add-slot-btn" (click)="addSlotOpen = true">
+    <button mat-raised-button class="add-slot-btn" (click)="openAddSlot()">
       <mat-icon>add</mat-icon>
       Add Slot
     </button>
@@ -16,11 +16,11 @@
 
   <!-- Hero image -->
   <div class="manage-hero">
-    <img
-      *ngIf="heroImages().length > 0; else heroPlaceholder"
-      [src]="heroImages()[heroIndex()]"
-      [alt]="venue.name"
-      class="hero-img" />
+    
+    <div class="hero-img-wrap" *ngIf="heroImages().length > 0; else heroPlaceholder">
+      <img [src]="heroImages()[heroIndex()]" [alt]="venue.name" class="hero-img-bg" />
+      <img [src]="heroImages()[heroIndex()]" [alt]="venue.name" class="hero-img-fg" />
+    </div>
 
     <ng-template #heroPlaceholder>
       <div class="hero-img hero-img--placeholder"></div>
@@ -143,102 +143,136 @@
         </div>
       </section>
 
-      <!-- Slots section -->
-      <section class="slots-section">
-        <div class="slots-header">
-          <h2 class="section-title">Slots</h2>
-          <span class="slot-summary-pill">{{ totalSlots }} total &nbsp;·&nbsp; {{ bookedSlots }} booked &nbsp;·&nbsp; {{ availableSlots }} available</span>
-        </div>
-
-        <div class="no-slots" *ngIf="slotGroups().length === 0">
-          <mat-icon>event_busy</mat-icon>
-          <p>No slots have been created for this venue yet.</p>
-        </div>
-
-        <div class="date-group" *ngFor="let group of slotGroups()">
-          <!-- Date header -->
-          <div class="date-header">
-            <mat-icon>calendar_today</mat-icon>
-            <span class="date-label">{{ group.dateIso | date:'EEE, d MMM yyyy' }}</span>
-            <span class="end-date-label" *ngIf="group.isMultiDay">
-              <mat-icon>arrow_forward</mat-icon>
-              {{ group.endDateIso | date:'EEE, d MMM yyyy' }}
-              <span *ngIf="group.isMultiDay" class="multi-day-badge">&nbsp;(multi-day)</span>
-            </span>
-          </div>
-
-          <!-- Slot cards -->
-          <div class="slot-card-list">
-            <div class="slot-card"
-                 *ngFor="let slot of group.slots"
-                 [class.slot-card--booked]="getSlotAvailabilityState(slot) === 'booked'"
-                 [class.slot-card--partial]="getSlotAvailabilityState(slot) === 'partial'"
-                 [class.slot-card--available]="getSlotAvailabilityState(slot) === 'available'">
-
-              <!-- Left: time + price -->
-              <div class="slot-main">
-                <div class="slot-time">
-                  <mat-icon>schedule</mat-icon>
-                  {{ slot.start }} - {{ slot.end }}
-                </div>
-                <div class="slot-price">{{ slot.price | currency:'INR':'symbol':'1.0-0' }}</div>
-                <span class="slot-type-badge">{{ slot.slotType }}</span>
-                <div class="slot-flex-details" *ngIf="slot.slotType === 'FLEXIBLE'">
-                  <div class="flex-timeline">
-                    <div class="flex-timeline__bar">
-                      <div *ngFor="let seg of getFlexTimeline(slot)"
-                           class="flex-timeline__segment"
-                           [ngClass]="'flex-timeline__segment--' + seg.type"
-                           [style.width.%]="seg.widthPct"
-                           [matTooltip]="seg.label">
+      <section class="manage-tabs-section">
+        <mat-tab-group animationDuration="150ms" (selectedIndexChange)="onTabChange($event)">
+        
+          <mat-tab label="Slots">
+            <div class="slots-header">
+              <h2 class="section-title">Slots</h2>
+              <span class="slot-summary-pill">{{ totalSlots }} total &nbsp;·&nbsp; {{ bookedSlots }} booked &nbsp;·&nbsp; {{ availableSlots }} available</span>
+            </div>
+          
+            <div class="no-slots" *ngIf="slotGroups().length === 0">
+              <mat-icon>event_busy</mat-icon>
+              <p>No slots have been created for this venue yet.</p>
+            </div>
+          
+            <div class="date-group" *ngFor="let group of slotGroups()">
+              <!-- Date header -->
+              <div class="date-header">
+                <mat-icon>calendar_today</mat-icon>
+                <span class="date-label">{{ group.dateIso | date:'EEE, d MMM yyyy' }}</span>
+                <span class="end-date-label" *ngIf="group.isMultiDay">
+                  <mat-icon>arrow_forward</mat-icon>
+                  {{ group.endDateIso | date:'EEE, d MMM yyyy' }}
+                  <span *ngIf="group.isMultiDay" class="multi-day-badge">&nbsp;(multi-day)</span>
+                </span>
+              </div>
+            
+              <!-- Slot cards -->
+              <div class="slot-card-list">
+                <div class="slot-card"
+                     *ngFor="let slot of group.slots"
+                     [class.slot-card--booked]="getSlotAvailabilityState(slot) === 'booked'"
+                     [class.slot-card--partial]="getSlotAvailabilityState(slot) === 'partial'"
+                     [class.slot-card--available]="getSlotAvailabilityState(slot) === 'available'"
+                     [class.slot-card--blocked]="slot.slotStatus === 'BLOCKED'">
+              
+                  <!-- Left: time + price -->
+                  <div class="slot-main">
+                    <div class="slot-time">
+                      <mat-icon>schedule</mat-icon>
+                      {{ slot.start }} - {{ slot.end }}
+                    </div>
+                    <div class="slot-price">{{ slot.price | currency:'INR':'symbol':'1.0-0' }}</div>
+                    <span class="slot-type-badge">{{ slot.slotType }}</span>
+                    <div class="slot-flex-details" *ngIf="slot.slotType === 'FLEXIBLE'">
+                      <div class="flex-timeline">
+                        <div class="flex-timeline__bar">
+                          <div *ngFor="let seg of getFlexTimeline(slot)"
+                               class="flex-timeline__segment"
+                               [ngClass]="'flex-timeline__segment--' + seg.type"
+                               [style.width.%]="seg.widthPct"
+                               [matTooltip]="seg.label">
+                          </div>
+                        </div>
+                      </div>
+                    
+                      <div class="flex-chips">
+                        <span class="flex-chip">Min slot time: {{ slot.minSlotTime }} min</span>
+                        <span class="flex-chip" *ngIf="slot.maxSlotTime">Max slot time: {{ slot.maxSlotTime }} min</span>
+                        <span class="flex-chip">Min slot price: {{ slot.minSlotPrice | currency:'INR':'symbol':'1.0-0' }}</span>
+                        <span class="flex-chip" *ngIf="slot.bufferTime">Buffer time: {{ slot.bufferTime }} min</span>
                       </div>
                     </div>
                   </div>
                 
-                  <div class="flex-chips">
-                    <span class="flex-chip">Min slot time: {{ slot.minSlotTime }} min</span>
-                    <span class="flex-chip" *ngIf="slot.maxSlotTime">Max slot time: {{ slot.maxSlotTime }} min</span>
-                    <span class="flex-chip">Min slot price: {{ slot.minSlotPrice | currency:'INR':'symbol':'1.0-0' }}</span>
-                    <span class="flex-chip" *ngIf="slot.bufferTime">Buffer time: {{ slot.bufferTime }} min</span>
+                  <!-- Right: booking status -->
+                  <div class="slot-booking">
+                    <ng-container [ngSwitch]="getSlotAvailabilityState(slot)">
+                      <div *ngSwitchCase="'booked'" class="booking-info">
+                        <div class="booking-info__status-row">
+                          <span class="booking-info__status-dot"></span>
+                          <span class="booking-info__status-text">Booked</span>
+                        </div>
+                        <div class="booking-info__chips">
+                          <span class="booking-chip booking-chip--user" (click)="openBookingDetails(slot, $event)">
+                            <mat-icon>person</mat-icon>{{ slot.bookings[0].userName }}<span *ngIf="slot.bookings.length > 1">&nbsp;+{{ slot.bookings.length - 1 }}</span>
+                            <mat-icon class="chip-caret">expand_more</mat-icon>
+                          </span>
+                        </div>
+                      </div>
+                    
+                      <div *ngSwitchCase="'partial'" class="partial-indicator">
+                        <mat-icon>event_repeat</mat-icon>
+                        <span>Partially booked</span>
+                        <span class="booking-chip booking-chip--user" (click)="openBookingDetails(slot, $event)">
+                          {{ slot.bookings.length }} booking{{ slot.bookings.length > 1 ? 's' : '' }}
+                        </span>
+                      </div>
+                    
+                      <div *ngSwitchCase="'available'" class="available-indicator">
+                        <button *ngIf = "slot.slotStatus !== 'BLOCKED'" mat-icon-button class="slot-edit-btn" (click)="openEditSlot(slot)" title="Edit slot">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button class="slot-delete-btn" (click)="deleteSlot(slot)" title="Delete slot">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                        <button *ngIf = "canBlockSlot(slot)" mat-icon-button class="slot-lock-btn" (click)="blockSlot(slot)" title="Block slot">
+                          <mat-icon>lock</mat-icon>
+                        </button>
+                        <button *ngIf="canUnblockSlot(slot)" mat-icon-button class="slot-unlock-btn" (click)="unBlockSlot(slot)" title="Unblock slot">
+                          <mat-icon>lock_open_right</mat-icon>
+                        </button>
+                        <mat-icon>event_available</mat-icon>
+                        <span>{{slot.slotStatus === 'BLOCKED'? 'Blocked' : 'Available'}}</span>
+                      </div>
+                    </ng-container>
                   </div>
                 </div>
               </div>
-
-              <!-- Right: booking status -->
-              <div class="slot-booking">
-                <ng-container [ngSwitch]="getSlotAvailabilityState(slot)">
-                  <div *ngSwitchCase="'booked'" class="booking-info">
-                    <div class="booking-info__status-row">
-                      <span class="booking-info__status-dot"></span>
-                      <span class="booking-info__status-text">Booked</span>
-                    </div>
-                    <div class="booking-info__chips">
-                      <span class="booking-chip booking-chip--user" (click)="openBookingDetails(slot, $event)">
-                        <mat-icon>person</mat-icon>{{ slot.bookings[0].userName }}<span *ngIf="slot.bookings.length > 1">&nbsp;+{{ slot.bookings.length - 1 }}</span>
-                        <mat-icon class="chip-caret">expand_more</mat-icon>
-                      </span>
-                    </div>
-                  </div>
-                
-                  <div *ngSwitchCase="'partial'" class="partial-indicator">
-                    <mat-icon>event_repeat</mat-icon>
-                    <span>Partially booked</span>
-                    <span class="booking-chip booking-chip--user" (click)="openBookingDetails(slot, $event)">
-                      {{ slot.bookings.length }} booking{{ slot.bookings.length > 1 ? 's' : '' }}
-                    </span>
-                  </div>
-                
-                  <div *ngSwitchCase="'available'" class="available-indicator">
-                    <button mat-icon-button class="slot-edit-btn" (click)="openEditSlot(slot)" title="Edit slot">
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <mat-icon>event_available</mat-icon><span>Available</span>
-                  </div>
-                </ng-container>
-              </div>
             </div>
-          </div>
-        </div>
+          </mat-tab>
+        
+          <mat-tab label="Upcoming Bookings">
+            <app-venue-booking-list
+              variant="upcoming"
+              [page]="upcomingBookingsPage()"
+              [loading]="upcomingLoading()"
+              (loadMore)="onUpcomingLoadMore($event)">
+            </app-venue-booking-list>
+          </mat-tab>
+
+          <mat-tab label="Past Bookings">
+            <app-venue-booking-list
+              variant="past"
+              [page]="pastBookingsPage()"
+              [loading]="pastLoading()"
+              (loadMore)="onPastLoadMore($event)">
+            </app-venue-booking-list>
+          </mat-tab>
+        
+        </mat-tab-group>
       </section>
     </div>
 
@@ -270,8 +304,8 @@
   <app-venue-add-slot
     [open]="addSlotOpen"
     [editSlot]="editSlotTarget"
-    (closeDrawer)="addSlotOpen = false"
-    (slotAdded)="onSlotAdded($event)"
+    (closeDrawer)="closeAddSlotDrawer()"
+    (slotsAdded)="onSlotsAdded($event)"
     (slotEdited)="onSlotEdited($event)">
   </app-venue-add-slot>
 
@@ -300,7 +334,7 @@
         </div>
         <div class="booking-popover__detail">
           <mat-icon>schedule</mat-icon>
-          {{ formatTime(b.startDateTime) }} – {{ formatTime(b.endDateTime) }}
+          {{ formatTime(b.startDateTime) }} - {{ formatTime(b.endDateTime) }}
         </div>
       </div>
     </div>

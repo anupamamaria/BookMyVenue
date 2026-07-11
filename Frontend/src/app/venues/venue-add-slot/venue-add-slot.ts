@@ -44,21 +44,16 @@ export interface EditSlotPayload extends AddSlotPayload {
   styleUrl:    './venue-add-slot.scss',
 })
 export class VenueAddSlotComponent implements OnChanges {
-
-  /** Show / hide the drawer */
   @Input() open = false;
   @Input() editSlot: VenueManageSlot | null = null;
 
-  /** Fired when the user cancels or after a successful save */
   @Output() closeDrawer = new EventEmitter<void>();
-
-  /** Fired with the validated payload — parent calls the API */
-  @Output() slotAdded = new EventEmitter<AddSlotPayload>();
+  @Output() slotsAdded = new EventEmitter<AddSlotPayload[]>();
   @Output() slotEdited = new EventEmitter<EditSlotPayload>();
-
-
+  
   readonly minDate = new Date();
-  isEnabled = false; // for repeat section
+  repeatDaysError = false;
+  repeatUntilError = false;
 
   readonly weekDays = [
     { label: 'Sun', value: 0 },
@@ -71,7 +66,6 @@ export class VenueAddSlotComponent implements OnChanges {
   ];
 
   selectedDays = new Set<number>();
-
   form: FormGroup;
 
   constructor(private fb: FormBuilder) {
@@ -83,13 +77,16 @@ export class VenueAddSlotComponent implements OnChanges {
       endTime:        ['',      Validators.required],
       totalSlotPrice: [null,    [Validators.required, Validators.min(1)]],
       // flexible
-      minSlotTime:    [null],
+      minSlotTime:    [null, [Validators.required, Validators.min(1)]],
       maxSlotTime:    [null],
-      minSlotPrice:   [null],
-      bufferTime:     [0],
+      minSlotPrice:   [null, [Validators.required, Validators.min(1)]],
+      bufferTime:     [0, Validators.required],
       // repeat
       repeatEnabled:  [false],
+      repeatUntil:    [null],
     });
+    this.form.get('startDate')?.valueChanges.subscribe(() => this.syncRepeatAvailability());
+    this.form.get('endDate')?.valueChanges.subscribe(() => this.syncRepeatAvailability());
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -100,6 +97,8 @@ export class VenueAddSlotComponent implements OnChanges {
         this.form.reset({ slotType: 'FIXED', bufferTime: 0, repeatEnabled: false });
         this.selectedDays.clear();
       }
+      this.repeatDaysError = false;
+      this.repeatUntilError = false;
     }
   }
 
@@ -113,6 +112,69 @@ export class VenueAddSlotComponent implements OnChanges {
 
   get repeatEnabled(): boolean {
     return !!this.form.get('repeatEnabled')?.value;
+  }
+  
+  get isMultiDayRange(): boolean {
+    const start: Date = this.form.get('startDate')?.value;
+    const end: Date = this.form.get('endDate')?.value;
+    if (!start || !end) return false;
+    return this.stripTime(start).getTime() !== this.stripTime(end).getTime();
+  }
+
+  private stripTime(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  private isSameDay(a: Date, b: Date): boolean {
+    return this.stripTime(a).getTime() === this.stripTime(b).getTime();
+  }
+
+  private syncRepeatAvailability(): void {
+    const repeatEnabledCtrl = this.form.get('repeatEnabled');
+    const repeatUntilCtrl = this.form.get('repeatUntil');
+
+    if (this.isMultiDayRange) {
+      this.form.get('repeatEnabled')?.setValue(false, { emitEvent: false });
+      this.form.get('repeatUntil')?.setValue(null, { emitEvent: false });
+      this.selectedDays.clear();
+      this.repeatDaysError = false;
+      this.repeatUntilError = false;
+      repeatEnabledCtrl?.setValue(false, { emitEvent: false });
+      repeatEnabledCtrl?.disable({ emitEvent: false });
+      repeatUntilCtrl?.setValue(null, { emitEvent: false });
+      repeatUntilCtrl?.disable({ emitEvent: false });
+    }
+    else
+    {
+      repeatEnabledCtrl?.enable({ emitEvent: false });
+      repeatUntilCtrl?.enable({ emitEvent: false });
+    }
+  }
+
+  toggleDay(val: number): void {
+    this.selectedDays.has(val) ? this.selectedDays.delete(val) : this.selectedDays.add(val);
+    if (this.selectedDays.size > 0) this.repeatDaysError = false; // ADD
+  }
+
+  private computeTargetDates(baseStart: Date, repeatUntil: Date | null): Date[] {
+    if (!this.repeatEnabled || !repeatUntil) {
+      return [baseStart];
+    }
+    const dates: Date[] = [];
+    const end = this.stripTime(repeatUntil);
+    let current = new Date(baseStart);
+
+    while (this.stripTime(current).getTime() <= end.getTime()) {
+      if (this.selectedDays.has(current.getDay())) {
+        dates.push(new Date(current));
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    // always include the originally-entered date, even if its weekday wasn't chip-selected
+    if (!dates.some(d => this.isSameDay(d, baseStart))) {
+      dates.unshift(new Date(baseStart));
+    }
+    return dates.sort((a, b) => a.getTime() - b.getTime());
   }
 
   private prefillForEdit(slot: VenueManageSlot): void {
@@ -138,32 +200,31 @@ export class VenueAddSlotComponent implements OnChanges {
     this.form.get('slotType')?.disable();
   }
 
-  toggleDay(val: number): void {
-    this.selectedDays.has(val) ? this.selectedDays.delete(val) : this.selectedDays.add(val);
-  }
-
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    
+    if (this.repeatEnabled) {
+      if (this.selectedDays.size === 0) {
+        this.repeatDaysError = true;
+        return;
+      }
+      if (!this.form.get('repeatUntil')?.value) {
+        this.repeatUntilError = true;
+        return;
+      }
+    }
 
     // getRawValue() needed because slotType is disabled in edit mode —
     // disabled controls are excluded from .value but included in .getRawValue()
     const v = this.form.getRawValue();
-    console.log("v", v);
-    const toIso = (d: Date | null): string => {
-      if (!d) return '';
-      const y = d.getFullYear();
-      const m = (d.getMonth() + 1).toString().padStart(2, '0');
-      const day = d.getDate().toString().padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
-
-    const basePayload: AddSlotPayload = {
+    console.log("Data is ", v);
+    const toPayload = (startDate: Date, endDate: Date): AddSlotPayload => ({
       slotType:       v.slotType,
-      startDate:      v.startDate,
-      endDate:        v.endDate,
+      startDate,
+      endDate,
       startTime:      v.startTime,
       endTime:        v.endTime,
       totalSlotPrice: v.totalSlotPrice,
@@ -173,17 +234,18 @@ export class VenueAddSlotComponent implements OnChanges {
         minSlotPrice: v.minSlotPrice,
         bufferTime:   v.bufferTime ?? 0,
       }),
-      ...(this.repeatEnabled && this.selectedDays.size > 0 && {
-        repeatDays: [...this.selectedDays].sort(),
-      }),
-    };
+    });
 
     if (this.isEditMode) {
-      console.log({ ...basePayload, slotId: this.editSlot!.slotId });
-      this.slotEdited.emit({ ...basePayload, slotId: this.editSlot!.slotId });
-    } else {
-      this.slotAdded.emit(basePayload);
+      const payload = toPayload(v.startDate, v.endDate);
+      this.slotEdited.emit({ ...payload, slotId: this.editSlot!.slotId });
+      this.closeDrawer.emit();
+      return;
     }
+
+    const targetDates = this.computeTargetDates(v.startDate, v.repeatUntil);
+    const payloads = targetDates.map(d => toPayload(d, d));
+    this.slotsAdded.emit(payloads);
     this.closeDrawer.emit();
   }
 

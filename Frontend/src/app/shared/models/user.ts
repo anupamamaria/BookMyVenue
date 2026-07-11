@@ -1,9 +1,9 @@
 export interface User {
-    token: string;
-    name: string;
-    email: string;
-    location: string;
-    role: 'USER' | 'VENUE_OWNER';
+  token: string;
+  name: string;
+  email: string;
+  location: string;
+  role: 'USER' | 'VENUE_OWNER' | 'ADMIN';
 }
 
 export interface DashboardFilters {

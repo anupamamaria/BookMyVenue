@@ -1,0 +1,148 @@
+.booking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.booking-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.6fr 0.8fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+  transition: box-shadow 0.15s, border-color 0.15s;
+
+  &:hover {
+    border-color: #ddd;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__date, &__time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #999;
+    }
+  }
+
+  &__date {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  &__guest {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      color: #999;
+    }
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+
+  &__email {
+    font-size: 12.5px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  &__price {
+    font-weight: 700;
+    font-size: 15px;
+    color: #d62828;
+  }
+
+  &__status {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    min-width: 130px;
+  }
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.multi-day-badge {
+  font-size: 10px;
+  background: #f0f0f0;
+  color: #666;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.booking-list__sentinel {
+  height: 1px;
+}
+
+.booking-list__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  color: #888;
+  font-size: 13px;
+
+  .spin {
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.booking-list__empty {
+  text-align: center;
+  font-size: 14px;
+  color: #717171;
+  border: 1px dashed #d8d8d8;
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 26px 16px;
+}

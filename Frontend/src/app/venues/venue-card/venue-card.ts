@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { UserDashboardVenueDTO, Venue, Venue1 } from '../../shared/models/venue';
+import { UserDashboardVenueDTO } from '../../shared/models/venue';
 import { MatIconModule } from '@angular/material/icon';
 import { SearchService } from '../../shared/search.service';
 

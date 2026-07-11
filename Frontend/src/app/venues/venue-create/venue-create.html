@@ -219,7 +219,7 @@
               Apply this slot to multiple dates
             </mat-checkbox>
             
-            <div *ngIf="slotManagementForm.get('applyToOtherDates')?.value" class="date-options">
+            <div [hidden]="!slotManagementForm.get('applyToOtherDates')?.value" class="date-options">
               <mat-radio-group formControlName="applyMode" class="radio-group-horizontal">
                 <mat-radio-button value="selectedDates">Select specific dates</mat-radio-button>
                 <mat-radio-button value="dateRange">Apply to date range</mat-radio-button>
@@ -228,10 +228,10 @@
               <!-- Date Range Options -->
               <div *ngIf="slotManagementForm.get('applyMode')?.value === 'dateRange'" class="date-range-options">
                 <mat-form-field appearance="outline" class="date-field">
-                  <mat-label>End Date</mat-label>
-                  <input matInput [matDatepicker]="endPicker" formControlName="endDate">
-                  <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-                  <mat-datepicker #endPicker></mat-datepicker>
+                  <mat-label>Repeat Until</mat-label>
+                  <input matInput [matDatepicker]="applyEndPicker" formControlName="applyEndDate">
+                  <mat-datepicker-toggle matSuffix [for]="applyEndPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #applyEndPicker></mat-datepicker>
                 </mat-form-field>
               
                 <div formArrayName="daysOfWeek" class="days-checkboxes">
@@ -283,7 +283,7 @@
           </div>
 
           <!-- Add Slot Button -->
-          <button type="button" mat-raised-button class="btn-add-slot" (click)="addSlotFromForm()" [disabled]="!slotAddForm.valid || (slots.controls.length > 0 && editingIndex === null)">
+          <button type="button" mat-raised-button class="btn-add-slot" (click)="addSlotFromForm()" [disabled]="!slotAddForm.valid">
             <mat-icon>add</mat-icon>
             {{ editingIndex !== null ? 'Save Changes' : 'Add Slot' }}
           </button>

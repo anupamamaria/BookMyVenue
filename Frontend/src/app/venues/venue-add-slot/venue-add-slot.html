@@ -8,7 +8,7 @@
   <div class="drawer-header">
     <div class="drawer-header__left">
       <div class="drawer-header__icon-wrap">
-        <mat-icon>{{ isEditMode ? 'edit_calendar' : 'calendar_add_on' }}</mat-icon>
+        <mat-icon fontSet="material-symbols-outlined">{{ isEditMode ? 'edit_calendar' : 'calendar_add_on' }}</mat-icon>
       </div>
       <div>
         <h2 class="drawer-header__title">{{ isEditMode ? 'Edit Slot' : 'Add Slot' }}</h2>
@@ -153,7 +153,7 @@
       <mat-divider></mat-divider>
 
       <!-- 5 · Repeat on days -->
-      <section class="form-section" *ngIf="isEnabled">
+      <section class="form-section">
         <div class="repeat-header">
           <p class="form-section__label" style="margin:0">
             <mat-icon>repeat</mat-icon> Repeat
@@ -163,19 +163,26 @@
             <span class="toggle-track"></span>
           </label>
         </div>
-
+      
         <ng-container *ngIf="repeatEnabled">
-          <p class="repeat-hint">Apply slot to selected days within the date range</p>
+          <mat-form-field appearance="outline" class="field-full">
+            <mat-label>Repeat Until</mat-label>
+            <input matInput [matDatepicker]="repeatUntilPicker" formControlName="repeatUntil"
+                   [min]="form.get('startDate')?.value || minDate" readonly />
+            <mat-datepicker-toggle matSuffix [for]="repeatUntilPicker"></mat-datepicker-toggle>
+            <mat-datepicker #repeatUntilPicker></mat-datepicker>
+          </mat-form-field>
+          <p class="repeat-error" *ngIf="repeatUntilError">Pick a date to repeat until.</p>
+        
+          <p class="repeat-hint">Apply slot to selected days within the repeat range</p>
           <div class="day-chips">
-            <button
-              *ngFor="let d of weekDays"
-              type="button"
-              class="day-chip"
+            <button *ngFor="let d of weekDays" type="button" class="day-chip"
               [class.day-chip--active]="selectedDays.has(d.value)"
               (click)="toggleDay(d.value)">
               {{ d.label }}
             </button>
           </div>
+          <p class="repeat-error" *ngIf="repeatDaysError">Select at least one day to repeat on.</p>
         </ng-container>
       </section>
 
