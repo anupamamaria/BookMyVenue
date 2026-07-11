@@ -15,7 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBar } from '@angular/material/snack-bar';
 import { VenueService } from '../venueservice';
-import { forkJoin, switchMap } from 'rxjs';
+import { forkJoin, of, switchMap } from 'rxjs';
 import { MatTimepickerModule } from '@angular/material/timepicker';
 import { signal } from '@angular/core';
 import { Loader } from '../../shared/loader/loader';
@@ -40,7 +40,7 @@ export interface ImagePreview {
 })
 
 export class VenueCreate  implements OnInit {
-  multipleSlots = false;
+  multipleSlots = true;
   basicDetailsForm!: FormGroup;
   slotManagementForm!: FormGroup;
   pricingForm!: FormGroup;
@@ -81,7 +81,8 @@ export class VenueCreate  implements OnInit {
       endDate: [null, Validators.required],
       slots: this.fb.array([]),
       applyToOtherDates: [false],
-      applyMode: ['dateRange'], 
+      applyMode: ['dateRange'],
+      applyEndDate: [null], 
       selectedDates: [[]],
       daysOfWeek: this.fb.array(this.days.map(() => this.fb.control(true)))
     });
@@ -104,12 +105,10 @@ export class VenueCreate  implements OnInit {
 
       if (slotType === 'FLEXIBLE') {
         minSlotTimeCtrl?.setValidators([Validators.required, Validators.min(1)]);
-        maxSlotTimeCtrl?.setValidators([Validators.required, Validators.min(1)]);
         minSlotPriceCtrl?.setValidators([Validators.required, Validators.min(0)]);
         bufferTimeCtrl?.setValidators([Validators.required, Validators.min(0)]);
       } else {
         minSlotTimeCtrl?.clearValidators();
-        maxSlotTimeCtrl?.clearValidators();
         minSlotPriceCtrl?.clearValidators();
         bufferTimeCtrl?.clearValidators();
       }
@@ -119,6 +118,18 @@ export class VenueCreate  implements OnInit {
       minSlotPriceCtrl?.updateValueAndValidity();
       bufferTimeCtrl?.updateValueAndValidity();
     });
+    this.slotManagementForm.get('startDate')?.valueChanges.subscribe(() => this.syncApplyToOtherDatesAvailability());
+    this.slotManagementForm.get('endDate')?.valueChanges.subscribe(() => this.syncApplyToOtherDatesAvailability());
+  }
+
+  syncApplyToOtherDatesAvailability(): void {
+    const applyCtrl = this.slotManagementForm.get('applyToOtherDates');
+    if (this.isMultiDaySlot) {
+      applyCtrl?.setValue(false, { emitEvent: false });
+      applyCtrl?.disable({ emitEvent: false });
+    } else {
+      applyCtrl?.enable({ emitEvent: false });
+    }
   }
 
   isSelected = (date: Date) => {
@@ -217,29 +228,29 @@ export class VenueCreate  implements OnInit {
         const venueId = response;
         const form = this.slotManagementForm.value;
   
-        const slot = form.slots[0]; // only one slot
-        const slotRequest = {
-          startDateTime: this.combineDateAndTime(form.startDate, slot.start),
-          endDateTime: this.combineDateAndTime(form.endDate, slot.end),
-          slotType: form.slotType,
-          minSlotTime: slot.minSlotTime,
-          maxSlotTime: slot.maxSlotTime,
-          minSlotPrice: slot.minSlotPrice,
-          bufferTime: slot.bufferTime,
-          totalSlotPrice: slot.price
-        };
+        const slotRequests = form.slots.map((slot: any) => {
+          const request: any = {
+            startDateTime: this.combineDateAndTime(slot.startdate, slot.start),
+            endDateTime:   this.combineDateAndTime(slot.enddate, slot.end),
+            slotType:      slot.slotType,
+            totalSlotPrice: slot.price,
+          };
+          if (slot.slotType === 'FLEXIBLE') {
+            request.minSlotTime  = slot.minSlotTime;
+            request.maxSlotTime  = slot.maxSlotTime;
+            request.minSlotPrice = slot.minSlotPrice;
+            request.bufferTime   = slot.bufferTime;
+          }
+          return request; // just build the object now, don't call the API yet
+        });
         //create form data for images and slots
         return forkJoin({
-          slot: this.venueService.createSlot(
-            venueId,
-            slotRequest,
-            false
-          ),
-          images: this.venueService.uploadImages(
+          slot: slotRequests.length > 0 ? this.venueService.createSlotsBulk(venueId, slotRequests, false): of([]),
+          images: this.venueImages().length > 0 ? this.venueService.uploadImages(
             venueId,
             this.venueImages().map(img => img.file),
             0
-          ),
+          ) : of([]),
         });
       })
     ).subscribe({
@@ -403,7 +414,7 @@ export class VenueCreate  implements OnInit {
         this.openSnackBar('Minimum slot time cannot be greater than the total slot duration.');
         return;
       }
-      if (maxSlotTime > (endTime - startTime)) {
+      if (maxSlotTime && maxSlotTime > (endTime - startTime)) {
         this.openSnackBar('Maximum slot time cannot be greater than the total slot duration.');
         return;
       }
@@ -417,29 +428,73 @@ export class VenueCreate  implements OnInit {
       }
     }
 
+    const targetRanges = this.computeTargetDateRanges();
+    console.log("targetRanges", targetRanges);
+    if (targetRanges.length === 0) {
+      this.openSnackBar('No dates matched your selection — check your day-of-week filters.');
+      return;
+    }
+
+    // Check every calendar day touched by every generated range for overlaps
+    const conflictDates = new Set<string>();
+    for (const range of targetRanges) {
+      for (const day of this.getDatesBetween(range.start, range.end)) {
+        if (this.isOverlapping(slotForm.start, slotForm.end, day, this.editingIndex)) {
+          conflictDates.add(day.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+        }
+      }
+    }
+    if (conflictDates.size > 0) {
+      this.openSnackBar(`Skipped — overlaps an existing slot on: ${[...conflictDates].join(', ')}`);
+      return;
+    }
+
     if (this.editingIndex !== null) {
       this.slots.removeAt(this.editingIndex);
       this.editingIndex = null;
     }
 
-    const slotGroup: any = {
-      slotType,
-      startdate: [form.startDate, Validators.required],
-      enddate: [form.endDate, Validators.required],
-      start: [slotForm.start, Validators.required],
-      end: [slotForm.end, Validators.required],
-      price: [slotForm.price, [Validators.required, Validators.min(0)]],
-    };
-    if (slotType === 'FLEXIBLE') {
-      slotGroup.minSlotTime = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
-      slotGroup.maxSlotTime = [slotForm.maxSlotTime, [Validators.required, Validators.min(1)]];
-      slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
-      slotGroup.bufferTime = [slotForm.bufferTime, [Validators.required, Validators.min(0)]];
-    }
-    this.slots.push(this.fb.group(slotGroup));
+    targetRanges.forEach(range => {
+      const slotGroup: any = {
+        slotType,
+        startdate: [range.start, Validators.required],
+        enddate:   [range.end, Validators.required],
+        start:     [slotForm.start, Validators.required],
+        end:       [slotForm.end, Validators.required],
+        price:     [slotForm.price, [Validators.required, Validators.min(0)]],
+      };
+      if (slotType === 'FLEXIBLE') {
+        slotGroup.minSlotTime  = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
+        slotGroup.maxSlotTime  = [slotForm.maxSlotTime];
+        slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
+        slotGroup.bufferTime   = [slotForm.bufferTime, [Validators.required, Validators.min(0)]];
+      }
+      this.slots.push(this.fb.group(slotGroup));
+    });
 
     this.sortSlots();
     this.slotAddForm.reset();
+    this.daysSelected = [];
+    this.slotManagementForm.patchValue({ applyToOtherDates: false, selectedDates: [] });
+
+    // const slotGroup: any = {
+    //   slotType,
+    //   startdate: [form.startDate, Validators.required],
+    //   enddate: [form.endDate, Validators.required],
+    //   start: [slotForm.start, Validators.required],
+    //   end: [slotForm.end, Validators.required],
+    //   price: [slotForm.price, [Validators.required, Validators.min(0)]],
+    // };
+    // if (slotType === 'FLEXIBLE') {
+    //   slotGroup.minSlotTime = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
+    //   slotGroup.maxSlotTime = [slotForm.maxSlotTime];
+    //   slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
+    //   slotGroup.bufferTime = [slotForm.bufferTime, [Validators.required, Validators.min(0)]];
+    // }
+    // this.slots.push(this.fb.group(slotGroup));
+
+    // this.sortSlots();
+    // this.slotAddForm.reset();
   }
 
   getDatesBetween(start: Date, end: Date): Date[] {
@@ -469,5 +524,51 @@ export class VenueCreate  implements OnInit {
 
       return startA - startB; // then by start time
     });
+  }
+
+  private stripTime(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  private isSameDay(a: Date, b: Date): boolean {
+    return this.stripTime(a).getTime() === this.stripTime(b).getTime();
+  }
+
+  /** Computes every {start,end} occurrence this "Add Slot" click should produce. */
+  computeTargetDateRanges(): { start: Date; end: Date }[] {
+    const form = this.slotManagementForm.value;
+    const baseStart: Date = form.startDate;
+    const baseEnd: Date = form.endDate;
+
+    if (!form.applyToOtherDates) {
+      return [{ start: baseStart, end: baseEnd }];
+    }
+
+    // applyToOtherDates is only ever true for single-day base slots (enforced via
+    // syncApplyToOtherDatesAvailability), so every replicated occurrence is 1 day.
+    if (form.applyMode === 'selectedDates') {
+      const starts = [...this.daysSelected];
+      if (!starts.some(d => this.isSameDay(d, baseStart))) {
+        starts.unshift(baseStart);
+      }
+      return starts
+        .sort((a, b) => a.getTime() - b.getTime())
+        .map(start => ({ start, end: start }));
+    }
+
+    // dateRange mode
+    const rangeEnd: Date = form.applyEndDate ?? baseStart;
+    const allowedDays: boolean[] = form.daysOfWeek;
+
+    return this.getDatesBetween(baseStart, rangeEnd)
+      .filter(d => allowedDays[d.getDay()])
+      .map(start => ({ start, end: start }));
+  }
+
+  get isMultiDaySlot(): boolean {
+    const start: Date = this.slotManagementForm.get('startDate')?.value;
+    const end: Date = this.slotManagementForm.get('endDate')?.value;
+    if (!start || !end) return false;
+    return !this.isSameDay(start, end);
   }
 }

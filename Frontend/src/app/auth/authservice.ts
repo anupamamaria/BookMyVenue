@@ -24,7 +24,6 @@ export class Authservice {
       { email, password }
     ).pipe(
       tap((response: any) => {
-        localStorage.setItem('auth-token', response.token);
         localStorage.setItem('current-user', JSON.stringify(response));
 
         this.loggedIn.set(true);
@@ -36,19 +35,16 @@ export class Authservice {
   logout(): void {
     this.loggedIn.set(false);
     this.currentUser.set(null);
-
-    localStorage.removeItem('auth-token');
     localStorage.removeItem('current-user');
   }
 
   checkAuth(): void {
-    const token = localStorage.getItem('auth-token');
     const user = localStorage.getItem('current-user');
 
-    this.loggedIn.set(!!token);
-
     if (user) {
-      this.currentUser.set(JSON.parse(user));
+      const parsedUser = JSON.parse(user);
+      this.loggedIn.set(!!parsedUser.token);
+      this.currentUser.set(parsedUser);
     }
   }
 

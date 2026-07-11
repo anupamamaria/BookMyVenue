@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { PageResponse, VenueAdmin, VenueManage, VenueManageSlot } from '../shared/models/venue';
+import { PageResponse } from '../shared/models/venue';
 import { Observable, of } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AdminDashboardResponse } from '../shared/models/admin';

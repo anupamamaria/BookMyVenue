@@ -22,6 +22,15 @@ export class ErrorDialog {
   ) {}
 
   close(): void {
-    this.dialogRef.close();
+    this.dialogRef.close({
+      action: 'Ok',
+    });
   }
+
+  cancel(): void {
+    this.dialogRef.close({
+      action: 'cancel',
+    });
+  }
+
 }

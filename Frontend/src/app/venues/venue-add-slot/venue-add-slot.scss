@@ -33,6 +33,8 @@
   // Slide-in
   transform: translateX(100%);
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  --mdc-outlined-text-field-container-shape: 10px;
+  --mat-form-field-container-vertical-padding: 12px;
 
   &--open {
     transform: translateX(0);
@@ -216,6 +218,7 @@ mat-divider {
 
 .field-full {
   display: block;
+  margin-bottom: 16px
 }
 
 .price-prefix {

@@ -54,7 +54,20 @@ export class Navbar implements OnInit {
   get currentUser(): User | null {
     return this.authService.currentUser();
   }
-  
+  get homeRoute(): string {
+    const role = this.authService.currentUser()?.role;
+
+    switch (role) {
+      case 'VENUE_OWNER':
+        return '/venues';
+
+      case 'ADMIN':
+        return '/admin';
+
+      default:
+        return '/';
+    }
+  }
   toggleUserMenu(): void { this.showUserMenu = !this.showUserMenu; }
 
   @HostListener('document:click', ['$event'])
