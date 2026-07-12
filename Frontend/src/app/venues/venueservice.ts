@@ -75,8 +75,9 @@ export class VenueService {
    return this.http.get<VenueManage>(`${this.baseUrl}venue/details/${id}`);
   }
   
-  updateSlot(venueId: number, slotId: number, slotData: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}venue/${venueId}/slot/${slotId}`, slotData, { responseType: 'text' });
+  updateSlot(venueId: number, slotId: number, slotData: any,  dryRun: boolean): Observable<any> {
+    const params = new HttpParams().set('dryRun', String(dryRun));
+    return this.http.put(`${this.baseUrl}venue/${venueId}/slot/${slotId}`, slotData, { params, responseType: 'text' });
   }
 
   createVenue(venueData: any): Observable<any> {
