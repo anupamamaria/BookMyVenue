@@ -12,8 +12,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { VenueBookingList } from '../venue-booking-list/venue-booking-list';
 import { Navbar } from '../../shared/navbar/navbar';
 import { MatDialog } from '@angular/material/dialog';
-import { ErrorDialog } from '../../shared/error-dialog/error-dialog';
-import { filter, switchMap } from 'rxjs';
+import { ErrorDialog, ErrorDialogData } from '../../shared/error-dialog/error-dialog';
+import { filter, map, Observable, of, switchMap } from 'rxjs';
 
 interface SlotDateGroup {
   dateIso: string;
@@ -135,22 +135,80 @@ export class VenueManagement implements OnInit {
         bufferTime:   payload.bufferTime,
       }),
     }));
- 
-    this.service.createSlotsBulk(venueId, dto, false).subscribe({
-      next: () => {
-        this.snackBar.open('Slot Added', '', {
-          horizontalPosition: this.horizontalPosition,
-          verticalPosition: this.verticalPosition,
-          duration: 3000,
-        });
-        // Refresh venue data to show the new slot
+    console.log("dto is ", dto);
+    this.callSlotApi(venueId, dto, true).pipe(
+      switchMap((dryRunText: string) => {
+        const warnings = this.extractWarnings(dryRunText);
+
+        if (warnings.length === 0) {
+          return this.callSlotApi(venueId, dto, false);
+        }
+
+        return this.confirmWarnings(warnings).pipe(
+          switchMap(confirmed =>
+            confirmed ? this.callSlotApi(venueId, dto, false) : of(null)
+          )
+        );
+      })
+    ).subscribe({
+      next: (result) => {
+        if (result === null) {
+          // user declined after seeing warnings — nothing was created
+          return;
+        }
+
+        this.snackBar.open(
+          dto.length > 1 ? `${dto.length} slots added` : 'Slot Added',
+          '',
+          {
+            horizontalPosition: this.horizontalPosition,
+            verticalPosition: this.verticalPosition,
+            duration: 3000,
+          }
+        );
+        // Refresh venue data to show the new slot(s)
         this.ngOnInit();
       },
       error: (err) => {
         console.error('Failed to create slot', err);
+        this.snackBar.open('Failed to add slot(s). Please try again.', '', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 3000,
+        });
       },
     });
   }
+
+  /** Routes to the singular endpoint for exactly one slot, bulk otherwise. */
+  private callSlotApi(venueId: number, slots: any[], dryRun: boolean): Observable<string> {
+    if (slots.length === 1) {
+      return this.service.createSlot(venueId, slots[0], dryRun);
+    }
+    return this.service.createSlotsBulk(venueId, slots, dryRun);
+  }
+
+  /** Text response from dry-run — non-empty text means there's a warning to show. */
+  private extractWarnings(responseText: string): string[] {
+    if (!responseText) return [];
+    const trimmed = responseText.trim();
+    if (!trimmed) return [];
+    return trimmed.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+  }
+
+  /** Shows the warning text, resolves true if the user confirms, false if they cancel. */
+  private confirmWarnings(warnings: string[]) {
+    const dialogRef = this.dialog.open(ErrorDialog, {
+      data: {
+        title: 'Review before creating slots',
+        message: warnings.join('\n'),
+      } as ErrorDialogData,
+      width: '500px',
+    });
+    return dialogRef.afterClosed().pipe(map(result => result?.action === 'Ok')
+    );
+  }
+
   formatTime(dateTime: string): string {
     const date = new Date(dateTime);
 
@@ -503,15 +561,34 @@ export class VenueManagement implements OnInit {
       endDateTime:    this.combineDateAndTime(payload.endDate, payload.endTime),
       totalSlotPrice: payload.totalSlotPrice,
       ...(payload.slotType === 'FLEXIBLE' && {
-        minSlotTime:  payload.minSlotTime ?? 0,
-        maxSlotTime:  payload.maxSlotTime ?? 0,
-        minSlotPrice: payload.minSlotPrice ?? 0,
-        bufferTime:   payload.bufferTime ?? 0,
+        minSlotTime:  payload.minSlotTime,
+        maxSlotTime:  payload.maxSlotTime,
+        minSlotPrice: payload.minSlotPrice,
+        bufferTime:   payload.bufferTime,
       }),
     };
 
-    this.service.updateSlot(venueId, payload.slotId, dto).subscribe({
-      next: () => {
+    this.service.updateSlot(venueId, payload.slotId, dto, true).pipe(
+      switchMap((dryRunText: string) => {
+        const warnings = this.extractWarnings(dryRunText);
+      
+        if (warnings.length === 0) {
+          return this.service.updateSlot(venueId, payload.slotId, dto, false);
+        }
+      
+        return this.confirmWarnings(warnings).pipe(
+          switchMap(confirmed =>
+            confirmed ? this.service.updateSlot(venueId, payload.slotId, dto, false) : of(null)
+          )
+        );
+      })
+    ).subscribe({
+      next: (result) => {
+        if (result === null) {
+          // user declined after seeing warnings — slot was not updated
+          return;
+        }
+      
         this.snackBar.open('Slot Updated', '', {
           horizontalPosition: this.horizontalPosition,
           verticalPosition: this.verticalPosition,
@@ -520,7 +597,14 @@ export class VenueManagement implements OnInit {
         this.editSlotTarget = null;
         this.ngOnInit();
       },
-      error: (err) => console.error('Failed to update slot', err),
+      error: (err) => {
+        console.error('Failed to update slot', err);
+        this.snackBar.open('Failed to update slot. Please try again.', '', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 3000,
+        });
+      },
     });
   }
 

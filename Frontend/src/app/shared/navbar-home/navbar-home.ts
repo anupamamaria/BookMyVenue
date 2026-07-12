@@ -1,6 +1,6 @@
 import { Component, OnInit, ElementRef, HostListener, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -34,12 +34,19 @@ export class NavbarHome implements OnInit {
     private authService: Authservice,
     private el: ElementRef,
     private dialog: MatDialog,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.today.setHours(0, 0, 0, 0);
   }
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['login'] === 'true') {
+        const returnUrl = params['returnUrl'] ?? null;
+        this.openLoginDialog(returnUrl);
+      }
+    });
   }
   get isLoggedIn(): boolean {
     return this.authService.loggedIn();
@@ -78,14 +85,28 @@ export class NavbarHome implements OnInit {
     this.router.navigate(['/']);
   }
 
-  openLoginDialog(): void {
+  openLoginDialog(returnUrl: string | null = null): void {
     this.showUserMenu = false;
     const ref = this.dialog.open(Login, { width: '420px', panelClass: 'auth-dialog' });
     ref.afterClosed().subscribe(result => { 
       console.log('Login dialog closed with result:', result);
       if (result.action === 'signup') 
+      {
         this.openSignupDialog(); 
+        return;
+      } 
+      // Strip the login/returnUrl query params regardless of outcome,
+      // so a page refresh doesn't re-trigger the dialog
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { login: null, returnUrl: null },
+        queryParamsHandling: 'merge',
+      });
       if(result?.action === 'login-success') {
+        if (returnUrl) {
+          this.router.navigateByUrl(returnUrl);
+          return;
+        }
         //check the role of the user and navigate accordingly
         if(result.user.role === 'VENUE_OWNER') {
           this.router.navigate(['/venues']);

@@ -15,7 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBar } from '@angular/material/snack-bar';
 import { VenueService } from '../venueservice';
-import { forkJoin, of, switchMap } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { MatTimepickerModule } from '@angular/material/timepicker';
 import { signal } from '@angular/core';
 import { Loader } from '../../shared/loader/loader';
@@ -243,22 +243,39 @@ export class VenueCreate  implements OnInit {
           }
           return request; // just build the object now, don't call the API yet
         });
+        // Images start immediately — independent of slot dry-run/confirm flow
+        const images$ = this.venueImages().length > 0
+          ? this.venueService.uploadImages(venueId, this.venueImages().map(img => img.file), 0)
+          : of([]);
+        
+        // Slot pipeline runs its own dry-run -> optional confirm -> real create
+        const slots$ = this.runSlotPipeline(venueId, slotRequests);
+        
+        return forkJoin({ slot: slots$, images: images$ });
+
         //create form data for images and slots
-        return forkJoin({
-          slot: slotRequests.length > 0 ? this.venueService.createSlotsBulk(venueId, slotRequests, false): of([]),
-          images: this.venueImages().length > 0 ? this.venueService.uploadImages(
-            venueId,
-            this.venueImages().map(img => img.file),
-            0
-          ) : of([]),
-        });
+        // return forkJoin({
+        //   slot: slotRequests.length > 0 ? this.venueService.createSlotsBulk(venueId, slotRequests, false): of([]),
+        //   images: this.venueImages().length > 0 ? this.venueService.uploadImages(
+        //     venueId,
+        //     this.venueImages().map(img => img.file),
+        //     0
+        //   ) : of([]),
+        // });
       })
     ).subscribe({
       next: (result) => {
+        this.loading.set(false);
+
+        if (result.slot === null) {
+          // images may have succeeded independently — still worth reporting accurately
+          this.openSnackBar('Venue created, but slot creation was cancelled.');
+          this.router.navigate(['/venues']);
+          return;
+        }
+
         console.log('forkJoin result', result);
         this.openSnackBar('Venue created successfully!');
-        this.loading.set(false);
-        //reroute to venue list page after short delay to show snackbar
         setTimeout(() => {
           this.router.navigate(['/venues']);
         }, 0);
@@ -270,6 +287,64 @@ export class VenueCreate  implements OnInit {
       }
     });
   }
+
+  /** Dry-run -> conditional confirm -> real slot create. Emits null if user declines after warnings. */
+  private runSlotPipeline(venueId: any, slotRequests: any[]) {
+    if (slotRequests.length === 0) {
+      return of([]);
+    }
+
+    return this.callSlotApi(venueId, slotRequests, true).pipe(
+      switchMap((dryRunText: string) => {
+        const warnings = this.extractWarnings(dryRunText);
+
+        if (warnings.length === 0) {
+          return this.callSlotApi(venueId, slotRequests, false);
+        }
+
+        return this.confirmWarnings(warnings).pipe(
+          switchMap(confirmed =>
+            confirmed
+              ? this.callSlotApi(venueId, slotRequests, false)
+              : of(null)
+          )
+        );
+      })
+    );
+  }
+
+  /** Routes to the singular endpoint for exactly one slot, bulk otherwise. */
+  private callSlotApi(venueId: any, slotRequests: any[], dryRun: boolean): Observable<string> {
+    if (slotRequests.length === 0) {
+      return of('');
+    }
+    if (slotRequests.length === 1) {
+      return this.venueService.createSlot(venueId, slotRequests[0], dryRun);
+    }
+    return this.venueService.createSlotsBulk(venueId, slotRequests, dryRun);
+  }
+
+  /** Text response from dry-run — non-empty text means there's a warning to show. */
+  private extractWarnings(responseText: string): string[] {
+    if (!responseText) return [];
+    const trimmed = responseText.trim();
+    if (!trimmed) return [];
+    return trimmed.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+  }
+
+  /** Shows the warning text, resolves true if the user confirms, false if they cancel. */
+  private confirmWarnings(warnings: string[]) {
+    const dialogRef = this.dialog.open(ErrorDialog, {
+      data: {
+        title: 'Review before creating slots',
+        message: warnings.join('\n'),
+      } as ErrorDialogData,
+      width: '500px',
+    });
+    return dialogRef.afterClosed().pipe(map(result => result?.action === 'Ok')
+    );
+  }
+  
   cancelWizard(): void {
     this.router.navigate(['/venues']);
   }
