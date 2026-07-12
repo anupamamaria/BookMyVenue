@@ -96,24 +96,28 @@ public class BookingService {
         return rabbitMQService.publishBooking(bookingMessage);
     }
 
-//    @Transactional
-//    public void expirePendingBookings() {
-//
-//        LocalDateTime expiryTime = LocalDateTime.now().minusMinutes(15);
-//
-//        List<Booking> bookings =
-//                bookingRepository.findExpiredPendingBookings(expiryTime);
-//
-//        for (Booking booking : bookings) {
-//
-//            booking.setPaymentStatus(PaymentStatus.FAILED);
-//            booking.setBookingStatus(BookingStatus.PAYMENT_FAILED);
-//
-//            if (booking.getSlot().getSlotType() == SlotType.FIXED) {
-//                booking.getSlot().setSlotStatus(SlotStatus.AVAILABLE);
-//            }
-//        }
-//
-//        bookingRepository.saveAll(bookings);
-//    }
+    @Transactional
+    public void expirePendingBookings() {
+
+        LocalDateTime expiryTime = LocalDateTime.now().minusMinutes(15);
+
+        List<Booking> bookings =
+                bookingRepository.findByBookingStatusAndPaymentStatusAndCreatedAtLessThanEqual(
+                BookingStatus.RESERVED,
+                PaymentStatus.PENDING,
+                expiryTime
+        );
+
+        for (Booking booking : bookings) {
+
+            booking.setPaymentStatus(PaymentStatus.FAILED);
+            booking.setBookingStatus(BookingStatus.PAYMENT_FAILED);
+
+            if (booking.getSlot().getSlotType() == SlotType.FIXED) {
+                booking.getSlot().setSlotStatus(SlotStatus.AVAILABLE);
+            }
+        }
+
+        bookingRepository.saveAll(bookings);
+    }
 }

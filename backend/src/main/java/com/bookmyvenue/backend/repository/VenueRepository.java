@@ -16,7 +16,7 @@ public interface VenueRepository extends JpaRepository<Venue, Long> {
     Page<Venue> findByOwnerUserId(Long ownerId, Pageable pageable);
 
     @Query("SELECT v FROM Venue v WHERE v.owner.userId = :ownerId " +
-            "AND (:location IS NULL OR v.location = :location) " +
+            "AND (:location IS NULL OR LOWER(v.location) = LOWER(CAST(:location AS string))) " +
             "AND (:type IS NULL OR v.type = :type) " +
             "AND (:venueStatus IS NULL OR v.venueStatus = :venueStatus)")
     Page<Venue> findByOwnerWithFilters(

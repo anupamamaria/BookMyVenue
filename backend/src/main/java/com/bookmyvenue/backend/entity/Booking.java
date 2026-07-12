@@ -5,6 +5,8 @@ import com.bookmyvenue.backend.enums.PaymentStatus;
 import com.bookmyvenue.backend.enums.SlotType;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -43,4 +45,10 @@ public class Booking {
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

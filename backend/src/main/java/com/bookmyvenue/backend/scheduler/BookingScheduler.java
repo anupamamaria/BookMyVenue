@@ -13,6 +13,6 @@ public class BookingScheduler {
 
     @Scheduled(fixedRate = 60000)
     public void expirePendingBookings() {
-        //bookingService.expirePendingBookings();
+        bookingService.expirePendingBookings();
     }
 }
