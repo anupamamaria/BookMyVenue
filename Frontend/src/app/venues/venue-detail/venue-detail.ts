@@ -265,11 +265,12 @@ export class VenueDetail  implements OnInit {
     if (!slot) return;
 
     const startMin = this.timeToMinutes(startTime);
+    const endMin = this.timeToMinutes(slot.endDateTime);
     const interval = this.freeIntervalsFor(slot)
       .find(iv => startMin >= iv.start && startMin < iv.end);
 
     const maxEnd = interval
-      ? Math.min(interval.end, startMin + slot.maxSlotTime!)
+      ? Math.min(interval.end, startMin + (slot.maxSlotTime?? endMin))
       : startMin + (slot.minSlotTime ?? 0);
 
     const defaultEndMin = Math.min(startMin + slot.minSlotTime!, maxEnd);
@@ -335,23 +336,23 @@ export class VenueDetail  implements OnInit {
   // Returns valid duration options (in hours) for a selected start time
   flexEndOptions(slot: VenueSlotDTO, startTime: string): string[] {
     if (!slot) return [];
-    console.log(startTime);
+    
     const startMin = this.timeToMinutes(startTime);
-    console.log('StartMin', startMin);
+    const endMin = this.timeToMinutes(slot.endDateTime);
+    
     const interval = this.freeIntervalsFor(slot)
       .find(iv => startMin >= iv.start && startMin < iv.end);
-
-      console.log('flex end slots',slot);
       console.log('flexEndOptions',interval);
     if (!interval) return [];
 
     const minEnd = startMin + slot.minSlotTime!;
-    const maxEnd = Math.min(interval.end, startMin + slot.maxSlotTime!);
-
+    const maxEnd = Math.min(interval.end, startMin + (slot.maxSlotTime ?? endMin));
+    
     const options: string[] = [];
     for (let t = minEnd; t <= maxEnd; t += 30) {
       options.push(this.minutesToDateTime(slot.startDateTime, t));
     }
+    console.log(options);
     return options;
   }
 
