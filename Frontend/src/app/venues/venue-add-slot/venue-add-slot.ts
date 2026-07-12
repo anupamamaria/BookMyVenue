@@ -77,10 +77,10 @@ export class VenueAddSlotComponent implements OnChanges {
       endTime:        ['',      Validators.required],
       totalSlotPrice: [null,    [Validators.required, Validators.min(1)]],
       // flexible
-      minSlotTime:    [null, [Validators.required, Validators.min(1)]],
+      minSlotTime:    [null],
       maxSlotTime:    [null],
-      minSlotPrice:   [null, [Validators.required, Validators.min(1)]],
-      bufferTime:     [0, Validators.required],
+      minSlotPrice:   [null],
+      bufferTime:     [null],
       // repeat
       repeatEnabled:  [false],
       repeatUntil:    [null],
@@ -100,6 +100,34 @@ export class VenueAddSlotComponent implements OnChanges {
       this.repeatDaysError = false;
       this.repeatUntilError = false;
     }
+  }
+  
+  ngOnInit(): void {
+    this.form.get('slotType')!.valueChanges.subscribe(slotType => {
+      const minSlotTime = this.form.get('minSlotTime');
+      const minSlotPrice = this.form.get('minSlotPrice');
+      const bufferTime = this.form.get('bufferTime');
+
+      if (slotType === 'FLEXIBLE') {
+        minSlotTime?.setValidators([Validators.required,Validators.min(1)]);
+        minSlotPrice?.setValidators([Validators.required,Validators.min(1)]);
+        bufferTime?.setValidators([Validators.required,Validators.min(0)]);
+      } 
+      else {
+        minSlotTime?.clearValidators();
+        minSlotPrice?.clearValidators();
+        bufferTime?.clearValidators();
+
+        minSlotTime?.setValue(null);
+        minSlotPrice?.setValue(null);
+        bufferTime?.setValue(null);
+      }
+
+      minSlotTime?.updateValueAndValidity();
+      minSlotPrice?.updateValueAndValidity();
+      bufferTime?.updateValueAndValidity();
+    });
+
   }
 
   get isFlexible(): boolean {
@@ -202,10 +230,17 @@ export class VenueAddSlotComponent implements OnChanges {
 
   submit(): void {
     if (this.form.invalid) {
+      console.log('Form is invalid');
+      Object.keys(this.form.controls).forEach(key => {
+        const control = this.form.get(key);
+
+        if (control?.invalid) {
+          console.log(key, control.errors);
+        }
+      });
       this.form.markAllAsTouched();
       return;
     }
-    
     if (this.repeatEnabled) {
       if (this.selectedDays.size === 0) {
         this.repeatDaysError = true;
