@@ -2,6 +2,7 @@ package com.bookmyvenue.backend.repository;
 
 import com.bookmyvenue.backend.entity.Booking;
 import com.bookmyvenue.backend.enums.BookingStatus;
+import com.bookmyvenue.backend.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -78,14 +79,11 @@ public interface BookingRepository extends JpaRepository<Booking,Long> {
             Pageable pageable
     );
 
-//    @Query("""
-//SELECT b
-//FROM Booking b
-//WHERE b.bookingStatus = BookingStatus.RESERVED
-//AND b.paymentStatus = PaymentStatus.PENDING
-//AND b.createdAt <= :expiryTime
-//""")
-//    List<Booking> findExpiredPendingBookings(
-//            @Param("expiryTime") LocalDateTime expiryTime
-//    );
+    boolean existsBySlotSlotId(Long slotId);
+
+    List<Booking> findByBookingStatusAndPaymentStatusAndCreatedAtLessThanEqual(
+            BookingStatus bookingStatus,
+            PaymentStatus paymentStatus,
+            LocalDateTime createdAt
+    );
 }

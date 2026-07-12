@@ -49,6 +49,20 @@ public class VenueOwnerController {
                 .body("Slot Creation Successful");
     }
 
+    @PostMapping("/venue/{venueId}/slots/bulk")
+    public ResponseEntity<?> addMultipleSlots(
+            HttpServletRequest request,
+            @PathVariable Long venueId,
+            @RequestParam(defaultValue = "false") boolean dryRun,
+            @RequestBody List<SlotRequestDTO> slotRequests) {
+
+        Long ownerId = (Long) request.getAttribute("userId");
+
+        return ResponseEntity.ok(
+                venueOwnerService.addMultipleSlots(ownerId, venueId, dryRun, slotRequests)
+        );
+    }
+
     @PutMapping("/venue/{venueId}/slot/{slotId}")
     ResponseEntity<String> editSlot(HttpServletRequest request,
                                    @PathVariable Long venueId,
@@ -129,7 +143,46 @@ public class VenueOwnerController {
     ) {
         Long ownerId = (long) request.getAttribute("userId");
         return ResponseEntity.ok(venueOwnerService.getUpcomingBookings(ownerId, venueId, page, size));
+    }
 
+    @DeleteMapping("/venue/{venueId}/slots/{slotId}")
+    public ResponseEntity<String> deleteSlot(
+            HttpServletRequest request,
+            @PathVariable Long venueId,
+            @PathVariable Long slotId) {
+
+        Long ownerId = (Long) request.getAttribute("userId");
+
+        return ResponseEntity.ok(
+                venueOwnerService.deleteSlot(ownerId, venueId, slotId)
+        );
+    }
+
+    @PatchMapping("/venue/{venueId}/slots/{slotId}/block")
+    public ResponseEntity<String> blockSlot(
+            HttpServletRequest request,
+            @PathVariable Long venueId,
+            @PathVariable Long slotId) {
+
+        Long ownerId = (Long) request.getAttribute("userId");
+
+        return ResponseEntity.ok(
+                venueOwnerService.blockSlot(ownerId, venueId, slotId)
+        );
+    }
+
+    @PatchMapping("/venue/{venueId}/slots/{slotId}/unblock")
+    public ResponseEntity<String> unblockSlot(
+            HttpServletRequest request,
+            @PathVariable Long venueId,
+            @PathVariable Long slotId,
+            @RequestParam(defaultValue = "false") boolean dryRun) {
+
+        Long ownerId = (Long) request.getAttribute("userId");
+
+        return ResponseEntity.ok(
+                venueOwnerService.unblockSlot(ownerId, venueId, slotId, dryRun)
+        );
     }
 
 }

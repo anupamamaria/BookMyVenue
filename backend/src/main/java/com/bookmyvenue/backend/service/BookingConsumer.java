@@ -10,6 +10,7 @@ import com.bookmyvenue.backend.enums.BookingStatus;
 import com.bookmyvenue.backend.enums.PaymentStatus;
 import com.bookmyvenue.backend.enums.SlotStatus;
 import com.bookmyvenue.backend.enums.SlotType;
+import com.bookmyvenue.backend.exception.BadRequestException;
 import com.bookmyvenue.backend.exception.NotFoundException;
 import com.bookmyvenue.backend.repository.BookingRepository;
 import com.bookmyvenue.backend.repository.SlotRepository;
@@ -37,12 +38,15 @@ public class BookingConsumer {
     public BookingResponseDTO processBooking(BookingMessage message) {
         Slot slot = slotRepository.findBySlotIdForUpdate(message.getSlotId())
                 .orElseThrow(() -> new NotFoundException("Slot Not Found"));
+        if (slot.getSlotStatus() != SlotStatus.AVAILABLE) {
+            throw new BadRequestException("Slot is not available for booking.");
+        }
         User user = userRepository.findById(message.getUserId())
                 .orElseThrow(() -> new NotFoundException("User Not Found"));
         availabilityService.checkSlotAvailability(slot, message);
         LocalDateTime startDateTime = message.getStartDateTime();
         LocalDateTime endDateTime = message.getEndDateTime();
-        BigDecimal totalPrice = pricingService.calculatePrice(slot, startDateTime, endDateTime);
+        BigDecimal totalPrice = pricingService. calculatePrice(slot, startDateTime, endDateTime);
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setVenue(slot.getVenue());
