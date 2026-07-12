@@ -47,7 +47,7 @@ export class VenueList implements OnInit {
   }
 
   loadVenues() {
-    if (this.lastPage || this.loadingMore()) {
+    if (this.lastPage ||this.loading() || this.loadingMore()) {
       return;
     }
 

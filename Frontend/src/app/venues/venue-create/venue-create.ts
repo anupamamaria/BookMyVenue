@@ -299,7 +299,7 @@ export class VenueCreate  implements OnInit {
         const warnings = this.extractWarnings(dryRunText);
 
         if (warnings.length === 0) {
-          return this.callSlotApi(venueId, slotRequests, false);
+          return of(dryRunText);
         }
 
         return this.confirmWarnings(warnings).pipe(
@@ -327,6 +327,8 @@ export class VenueCreate  implements OnInit {
   /** Text response from dry-run — non-empty text means there's a warning to show. */
   private extractWarnings(responseText: string): string[] {
     if (!responseText) return [];
+    if (responseText === 'Slot Creation Successful') return [];
+    if (responseText === 'Slots Created Successfully') return [];
     const trimmed = responseText.trim();
     if (!trimmed) return [];
     return trimmed.split('\n').map(w => w.trim()).filter(w => w.length > 0);
