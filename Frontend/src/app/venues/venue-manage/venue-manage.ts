@@ -141,9 +141,9 @@ export class VenueManagement implements OnInit {
         const warnings = this.extractWarnings(dryRunText);
 
         if (warnings.length === 0) {
-          return this.callSlotApi(venueId, dto, false);
+          return of(dryRunText);
         }
-
+        
         return this.confirmWarnings(warnings).pipe(
           switchMap(confirmed =>
             confirmed ? this.callSlotApi(venueId, dto, false) : of(null)
@@ -191,6 +191,9 @@ export class VenueManagement implements OnInit {
   /** Text response from dry-run — non-empty text means there's a warning to show. */
   private extractWarnings(responseText: string): string[] {
     if (!responseText) return [];
+    if (responseText === 'Slot Creation Successful') return [];
+    if (responseText === 'Slot Update Successful') return [];
+    if (responseText === 'Slots Created Successfully') return [];
     const trimmed = responseText.trim();
     if (!trimmed) return [];
     return trimmed.split('\n').map(w => w.trim()).filter(w => w.length > 0);
@@ -571,11 +574,11 @@ export class VenueManagement implements OnInit {
     this.service.updateSlot(venueId, payload.slotId, dto, true).pipe(
       switchMap((dryRunText: string) => {
         const warnings = this.extractWarnings(dryRunText);
-      
+
         if (warnings.length === 0) {
           return this.service.updateSlot(venueId, payload.slotId, dto, false);
         }
-      
+
         return this.confirmWarnings(warnings).pipe(
           switchMap(confirmed =>
             confirmed ? this.service.updateSlot(venueId, payload.slotId, dto, false) : of(null)
@@ -588,7 +591,7 @@ export class VenueManagement implements OnInit {
           // user declined after seeing warnings — slot was not updated
           return;
         }
-      
+
         this.snackBar.open('Slot Updated', '', {
           horizontalPosition: this.horizontalPosition,
           verticalPosition: this.verticalPosition,

@@ -3,6 +3,7 @@
     class="banner-image"
     [src]="booking.imagePath"
     [alt]="booking.venueName">
+
   <div class="banner-content">
     <div class="banner-label">
       Upcoming Booking
@@ -24,5 +25,10 @@
         {{ booking.endDateTime | date:'hh:mm a' }}
       </span>
     </div>
+  </div>
+
+  <div class="status-pill" [ngClass]="booking.bookingStatus?.toLowerCase()">
+    <span class="status-dot"></span>
+    {{ booking.bookingStatus }}
   </div>
 </div>

@@ -17,6 +17,7 @@ import { SearchService } from '../../shared/search.service';
 import { BookingRequestDTO, OrderRequestDTO } from '../../shared/models/booking';
 import { PaymentService } from '../../shared/payment';
 import { switchMap } from 'rxjs';
+import { Navbar } from '../../shared/navbar/navbar';
 
 export interface SlotGroup {
   dateIso: string;
@@ -30,6 +31,7 @@ export interface SlotGroup {
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule,
     MatProgressSpinnerModule, MatDatepickerModule, MatFormFieldModule, MatInputModule,
+    Navbar
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './venue-detail.html',
