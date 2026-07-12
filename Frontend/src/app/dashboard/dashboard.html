@@ -1,83 +1,46 @@
 <app-navbar-home></app-navbar-home>
 
-<!-- Main Content -->
-<main class="dashboard-content">
-  <section class="venue-section search-results-section" *ngIf="isSearchActive$ | async">
+<main class="dashboard-content" [class.side-by-side]="isLoggedIn">
+  <app-booking-banner
+    *ngIf="isLoggedIn && upcomingBooking()"
+    [booking]="upcomingBooking()!">
+</app-booking-banner>
+  <!-- Search results: flat grid -->
+  <section class="venue-section" *ngIf="isSearchActive$ | async">
     <div class="section-header">
-      <h2 class="section-title">
-        Search Results
-        <span class="results-count">({{ (searchResults$ | async)?.length ?? 0 }} venues found)</span>
-      </h2>
+      <h2 class="section-title">Search results</h2>
     </div>
-    <div class="venue-grid" *ngIf="(searchResults$ | async)?.length ?? 0 > 0">
-      <div class="card-slide" *ngFor="let venue of searchResults$ | async">
-        <app-venue-card [venue]="venue"></app-venue-card>
+
+    <ng-container *ngIf="(searchResults$ | async) as results">
+      <div class="venue-grid" *ngIf="results.length > 0; else pendingEmpty">
+        <app-venue-card
+          *ngFor="let venue of results"
+          [venue]="venue">
+        </app-venue-card>
       </div>
-    </div>
-    <div class="no-results" *ngIf="(searchResults$ | async)?.length === 0">
-      <span class="material-symbols-outlined no-results-icon">search_off</span>
-      <h3>No venues found</h3>
-      <p>Try adjusting your search criteria or filters</p>
-    </div>
+    </ng-container>
+
+    <ng-template #pendingEmpty>
+      <p class="empty-state">No venue available.</p>
+    </ng-template>
   </section>
 
+  <!-- Default dashboard: grouped by location -->
   <ng-container *ngIf="!(isSearchActive$ | async)">
-    <div class="section-header">
-      <h2 class="section-title">Featured Venues</h2>
-      <div class="scroll-btns">
-        <button class="scroll-btn" (click)="scroll('featured', 'left')" aria-label="Previous">&lsaquo;</button>
-        <button class="scroll-btn" (click)="scroll('featured', 'right')" aria-label="Next">&rsaquo;</button>
+    <section class="venue-section" *ngFor="let section of sections()">
+      <div class="section-header">
+        <h2 class="section-title">Properties in {{ section.location }}</h2>
+        <div class="scroll-btns" *ngIf="!isLoggedIn">
+          <button class="scroll-btn" (click)="scroll(section.location, 'left')">&lsaquo;</button>
+          <button class="scroll-btn" (click)="scroll(section.location, 'right')">&rsaquo;</button>
+        </div>
       </div>
-    </div>
-    <div class="venue-carousel" id="featured">
-      <div class="card-slide" *ngFor="let venue of featuredVenues">
-        <app-venue-card [venue]="venue"></app-venue-card>
+      <div class="venue-carousel" [id]="section.location">
+        <div class="card-slide" *ngFor="let venue of section.venues">
+          <app-venue-card [venue]="venue"></app-venue-card>
+        </div>
       </div>
-    </div>
-
-  <section class="venue-section">
-    <div class="section-header">
-      <h2 class="section-title">Properties in Wayanad</h2>
-      <div class="scroll-btns">
-        <button class="scroll-btn" (click)="scroll('wayanad', 'left')" aria-label="Previous">&lsaquo;</button>
-        <button class="scroll-btn" (click)="scroll('wayanad', 'right')" aria-label="Next">&rsaquo;</button>
-      </div>
-    </div>
-    <div class="venue-carousel" id="wayanad">
-      <div class="card-slide" *ngFor="let venue of wayanadVenues">
-        <app-venue-card [venue]="venue"></app-venue-card>
-      </div>
-    </div>
-  </section>
-
-  <section class="venue-section">
-    <div class="section-header">
-      <h2 class="section-title">Properties in Kochi</h2>
-      <div class="scroll-btns">
-        <button class="scroll-btn" (click)="scroll('kochi', 'left')" aria-label="Previous">&lsaquo;</button>
-        <button class="scroll-btn" (click)="scroll('kochi', 'right')" aria-label="Next">&rsaquo;</button>
-      </div>
-    </div>
-    <div class="venue-carousel" id="kochi">
-      <div class="card-slide" *ngFor="let venue of kochiVenues">
-        <app-venue-card [venue]="venue"></app-venue-card>
-      </div>
-    </div>
-  </section>
-
-  <section class="venue-section">
-    <div class="section-header">
-      <h2 class="section-title">Properties in Munnar</h2>
-      <div class="scroll-btns">
-        <button class="scroll-btn" (click)="scroll('munnar', 'left')" aria-label="Previous">&lsaquo;</button>
-        <button class="scroll-btn" (click)="scroll('munnar', 'right')" aria-label="Next">&rsaquo;</button>
-      </div>
-    </div>
-    <div class="venue-carousel" id="munnar">
-      <div class="card-slide" *ngFor="let venue of munnarVenues">
-        <app-venue-card [venue]="venue"></app-venue-card>
-      </div>
-    </div>
-  </section>
+    </section>
   </ng-container>
+
 </main>

@@ -1,6 +1,6 @@
-import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -10,31 +10,52 @@ import { User } from '../models/user';
 import { Login } from '../../auth/login/login';
 import { Signup } from '../../auth/signup/signup';
 import { Profile } from '../../auth/profile/profile';
+import { DateRange, MatDatepickerModule, MatDateRangeInput } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { provideNativeDateAdapter } from '@angular/material/core';
+
 
 @Component({
   selector: 'app-navbar-home',
-  imports: [CommonModule, RouterLink, FormsModule, MatCheckboxModule],
+  imports: [CommonModule, RouterLink, FormsModule, MatCheckboxModule,
+            MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  providers: [provideNativeDateAdapter()],
   templateUrl: './navbar-home.html',
   styleUrl: './navbar-home.scss',
 })
 export class NavbarHome implements OnInit {
   showUserMenu = false;
-  isLoggedIn = false;
-  currentUser: User | null = null;
+  today = new Date();
+  @ViewChild(MatDateRangeInput) rangeInput!: MatDateRangeInput<Date>;
 
   constructor(
     public search: SearchService,
     private authService: Authservice,
     private el: ElementRef,
     private dialog: MatDialog,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    this.authService.isLoggedIn$.subscribe(val => this.isLoggedIn = val);
-    this.authService.currentUser$.subscribe(user => this.currentUser = user);
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    this.today.setHours(0, 0, 0, 0);
   }
 
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['login'] === 'true') {
+        const returnUrl = params['returnUrl'] ?? null;
+        this.openLoginDialog(returnUrl);
+      }
+    });
+  }
+  get isLoggedIn(): boolean {
+    return this.authService.loggedIn();
+  }
+
+  get currentUser(): User | null {
+    return this.authService.currentUser();
+  }
+  
   toggleUserMenu(): void { this.showUserMenu = !this.showUserMenu; }
 
   @HostListener('document:click', ['$event'])
@@ -45,22 +66,67 @@ export class NavbarHome implements OnInit {
     }
   }
 
+  onPickerClosed() {
+  const value = this.rangeInput.value;
+
+  if (!value?.start) {
+    this.search.startDate.set(null);
+    this.search.endDate.set(null);
+    return;
+  }
+
+  this.search.startDate.set(value.start);
+  this.search.endDate.set(value.end ?? value.start);
+}
+
   logout(): void {
     this.authService.logout();
     this.showUserMenu = false;
     this.router.navigate(['/']);
   }
 
-  openLoginDialog(): void {
+  openLoginDialog(returnUrl: string | null = null): void {
     this.showUserMenu = false;
     const ref = this.dialog.open(Login, { width: '420px', panelClass: 'auth-dialog' });
-    ref.afterClosed().subscribe(r => { if (r === 'signup') this.openSignupDialog(); });
+    ref.afterClosed().subscribe(result => { 
+      console.log('Login dialog closed with result:', result);
+      if (result.action === 'signup') 
+      {
+        this.openSignupDialog(); 
+        return;
+      } 
+      // Strip the login/returnUrl query params regardless of outcome,
+      // so a page refresh doesn't re-trigger the dialog
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { login: null, returnUrl: null },
+        queryParamsHandling: 'merge',
+      });
+      if(result?.action === 'login-success') {
+        if (returnUrl) {
+          this.router.navigateByUrl(returnUrl);
+          return;
+        }
+        //check the role of the user and navigate accordingly
+        if(result.user.role === 'VENUE_OWNER') {
+          this.router.navigate(['/venues']);
+        } 
+        else if (result.user.role === 'ADMIN') {
+          this.router.navigate(['/admin']);
+        }
+        else {
+          this.router.navigate(['/']);
+        }
+      }
+    });
   }
 
   openSignupDialog(): void {
     this.showUserMenu = false;
     const ref = this.dialog.open(Signup, { width: '480px', panelClass: 'auth-dialog' });
-    ref.afterClosed().subscribe(r => { if (r === 'login') this.openLoginDialog(); });
+    ref.afterClosed().subscribe(result => { 
+      if (result.action === 'login') this.openLoginDialog(); 
+    });
   }
 
   openProfileDialog(): void {
@@ -74,6 +140,21 @@ export class NavbarHome implements OnInit {
     return parts.length >= 2
       ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
       : this.currentUser.name.slice(0, 2).toUpperCase();
+  }
+
+  get homeRoute(): string {
+    const role = this.authService.currentUser()?.role;
+
+    switch (role) {
+      case 'VENUE_OWNER':
+        return '/venues';
+
+      case 'ADMIN':
+        return '/admin';
+
+      default:
+        return '/';
+    }
   }
 
   get avatarColor(): string {

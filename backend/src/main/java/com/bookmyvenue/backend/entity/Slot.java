@@ -44,4 +44,5 @@ public class Slot {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+
 }

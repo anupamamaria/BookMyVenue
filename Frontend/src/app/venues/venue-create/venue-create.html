@@ -1,3 +1,8 @@
+<app-loader
+  *ngIf="loading()"
+  message="Creating your venue...">
+</app-loader>
+
 <div class="venue-create-container">
   <header class="page-header">
     <div>
@@ -94,8 +99,8 @@
             </div>
 
             <!-- Preview Grid -->
-            <div class="image-preview-grid" *ngIf="venueImages.length > 0">
-              <div class="preview-item" *ngFor="let img of venueImages; let i = index">
+            <div class="image-preview-grid" *ngIf="venueImages().length > 0">
+              <div class="preview-item" *ngFor="let img of venueImages(); let i = index">
                 <img [src]="img.dataUrl" [alt]="img.file.name" class="preview-img" />
                 <button class="preview-delete-btn" type="button" (click)="removeImage(i)" title="Remove">
                   <mat-icon>close</mat-icon>
@@ -108,6 +113,7 @@
         </form>
 
         <div class="step-actions">
+          <button mat-raised-button class="btn-back" (click)="cancelWizard()"> Cancel </button>
           <button mat-raised-button class="btn-primary" (click)="stepper.next()" [disabled]="!basicDetailsForm.valid">
             Continue
           </button>
@@ -129,8 +135,8 @@
           <div class="form-group">
             <label class="section-label">Booking Type</label>
             <mat-radio-group formControlName="slotType" class="radio-group">
-              <mat-radio-button value="fixed">Fixed Time Slots</mat-radio-button>
-              <mat-radio-button value="flexible">Flexible Duration</mat-radio-button>
+              <mat-radio-button value="FIXED">Fixed Time Slots</mat-radio-button>
+              <mat-radio-button value="FLEXIBLE">Flexible Duration</mat-radio-button>
             </mat-radio-group>
           </div>
 
@@ -163,7 +169,7 @@
             <div [formGroup]="slotAddForm" class="slot-row">
               <mat-form-field appearance="outline" class="time-field">
                   <mat-label>Start Time</mat-label>
-                  <input matInput formControlName="start" [matTimepicker]="startTimePicker">
+                  <input matInput formControlName="start" [matTimepicker]="startTimePicker" />
                   <mat-timepicker-toggle matIconSuffix [for]="startTimePicker">
                   </mat-timepicker-toggle>
                   <mat-timepicker #startTimePicker></mat-timepicker>
@@ -171,7 +177,7 @@
             
               <mat-form-field appearance="outline" class="time-field">
                 <mat-label>End Time</mat-label>
-                <input matInput formControlName="end" [matTimepicker]="endTimePicker">
+                <input matInput formControlName="end" [matTimepicker]="endTimePicker" />
                 <mat-timepicker-toggle matIconSuffix [for]="endTimePicker">
                 </mat-timepicker-toggle>
                 <mat-timepicker #endTimePicker></mat-timepicker>
@@ -184,7 +190,7 @@
             </div>
           
             <!-- Flexible-only fields -->
-            <div [formGroup]="slotAddForm" *ngIf="slotManagementForm.get('slotType')?.value === 'flexible'" class="slot-row">
+            <div [formGroup]="slotAddForm" *ngIf="slotManagementForm.get('slotType')?.value === 'FLEXIBLE'" class="slot-row">
               <mat-form-field appearance="outline" class="time-field">
                 <mat-label>Min Slot Time (mins)</mat-label>
                 <input matInput type="number" formControlName="minSlotTime" placeholder="30" />
@@ -213,7 +219,7 @@
               Apply this slot to multiple dates
             </mat-checkbox>
             
-            <div *ngIf="slotManagementForm.get('applyToOtherDates')?.value" class="date-options">
+            <div [hidden]="!slotManagementForm.get('applyToOtherDates')?.value" class="date-options">
               <mat-radio-group formControlName="applyMode" class="radio-group-horizontal">
                 <mat-radio-button value="selectedDates">Select specific dates</mat-radio-button>
                 <mat-radio-button value="dateRange">Apply to date range</mat-radio-button>
@@ -222,10 +228,10 @@
               <!-- Date Range Options -->
               <div *ngIf="slotManagementForm.get('applyMode')?.value === 'dateRange'" class="date-range-options">
                 <mat-form-field appearance="outline" class="date-field">
-                  <mat-label>End Date</mat-label>
-                  <input matInput [matDatepicker]="endPicker" formControlName="endDate">
-                  <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-                  <mat-datepicker #endPicker></mat-datepicker>
+                  <mat-label>Repeat Until</mat-label>
+                  <input matInput [matDatepicker]="applyEndPicker" formControlName="applyEndDate">
+                  <mat-datepicker-toggle matSuffix [for]="applyEndPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #applyEndPicker></mat-datepicker>
                 </mat-form-field>
               
                 <div formArrayName="daysOfWeek" class="days-checkboxes">
@@ -277,7 +283,7 @@
           </div>
 
           <!-- Add Slot Button -->
-          <button type="button" mat-raised-button class="btn-add-slot" (click)="addSlotFromForm()" [disabled]="!slotAddForm.valid || (slots.controls.length > 0 && editingIndex === null)">
+          <button type="button" mat-raised-button class="btn-add-slot" (click)="addSlotFromForm()" [disabled]="!slotAddForm.valid">
             <mat-icon>add</mat-icon>
             {{ editingIndex !== null ? 'Save Changes' : 'Add Slot' }}
           </button>
@@ -296,7 +302,7 @@
                     <mat-icon>schedule</mat-icon>
                     {{ slot.value.start | date:'shortTime' }} - {{ slot.value.end | date:'shortTime' }}</div>
                   <div class="slot-price">{{ slot.value.price | currency:'INR' }}</div>
-                  <div *ngIf="slot.value.slotType === 'flexible'" class="slot-meta">
+                  <div *ngIf="slot.value.slotType === 'FLEXIBLE'" class="slot-meta">
                     Min: {{ slot.value.minSlotTime }}min · {{ slot.value.minSlotPrice | currency:'INR' }} · Buffer: {{ slot.value.bufferTime }}min
                   </div>
                 </div>
@@ -314,8 +320,9 @@
         </form>
 
         <div class="step-actions">
+          <button mat-raised-button class="btn-back" (click)="cancelWizard()"> Cancel </button>
           <button mat-button class="btn-back" (click)="stepper.previous()">Back</button>
-          <button mat-raised-button class="btn-primary" (click)="onSubmit()" [disabled]="!slotManagementForm.valid">
+          <button mat-raised-button class="btn-primary" (click)="onSubmit()" [disabled]="!slotManagementForm.valid || slots.controls.length === 0">
             Create Venue
           </button>
         </div>

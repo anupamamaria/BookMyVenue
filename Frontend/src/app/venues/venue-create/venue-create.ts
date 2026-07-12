@@ -15,8 +15,13 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBar } from '@angular/material/snack-bar';
 import { VenueService } from '../venueservice';
-import { forkJoin, switchMap } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { MatTimepickerModule } from '@angular/material/timepicker';
+import { signal } from '@angular/core';
+import { Loader } from '../../shared/loader/loader';
+import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ErrorDialog, ErrorDialogData } from '../../shared/error-dialog/error-dialog';
 
 export interface ImagePreview {
   file: File;
@@ -28,14 +33,14 @@ export interface ImagePreview {
   imports: [CommonModule, ReactiveFormsModule, MatStepperModule, MatCheckboxModule,
             MatInputModule, MatButtonModule, MatIconModule, MatRadioModule, MatSelectModule,
             MatCardModule, MatDatepickerModule, MatNativeDateModule, MatMenuModule,
-            MatChipsModule, MatSnackBarModule, MatTimepickerModule],
+            MatChipsModule, MatSnackBarModule, MatTimepickerModule, Loader],
   providers: [provideNativeDateAdapter()],
   templateUrl: './venue-create.html',
   styleUrl: './venue-create.scss',
 })
 
 export class VenueCreate  implements OnInit {
-  multipleSlots = false;
+  multipleSlots = true;
   basicDetailsForm!: FormGroup;
   slotManagementForm!: FormGroup;
   pricingForm!: FormGroup;
@@ -44,13 +49,15 @@ export class VenueCreate  implements OnInit {
   days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   daysSelected: Date[] = [];
   minDate: Date = new Date();
-
-  venueImages: ImagePreview[] = [];
+  venueImages = signal<ImagePreview[]>([]);
   isDragOver = false;
   horizontalPosition: MatSnackBarHorizontalPosition = 'right';
   verticalPosition: MatSnackBarVerticalPosition = 'top';
+  loading = signal(false);
   
-  constructor(private fb: FormBuilder, private snackBar: MatSnackBar, private venueService: VenueService) {}
+  constructor(private fb: FormBuilder, private snackBar: MatSnackBar, 
+              private venueService: VenueService, private router: Router,
+              private dialog: MatDialog) {}
 
   ngOnInit(): void {
 
@@ -69,12 +76,13 @@ export class VenueCreate  implements OnInit {
     });
 
     this.slotManagementForm = this.fb.group({
-      slotType: ['fixed', Validators.required], 
+      slotType: ['FIXED', Validators.required], 
       startDate: [null, Validators.required],
       endDate: [null, Validators.required],
       slots: this.fb.array([]),
       applyToOtherDates: [false],
-      applyMode: ['dateRange'], 
+      applyMode: ['dateRange'],
+      applyEndDate: [null], 
       selectedDates: [[]],
       daysOfWeek: this.fb.array(this.days.map(() => this.fb.control(true)))
     });
@@ -95,14 +103,12 @@ export class VenueCreate  implements OnInit {
       const minSlotPriceCtrl = this.slotAddForm.get('minSlotPrice');
       const bufferTimeCtrl = this.slotAddForm.get('bufferTime');
 
-      if (slotType === 'flexible') {
+      if (slotType === 'FLEXIBLE') {
         minSlotTimeCtrl?.setValidators([Validators.required, Validators.min(1)]);
-        maxSlotTimeCtrl?.setValidators([Validators.required, Validators.min(1)]);
         minSlotPriceCtrl?.setValidators([Validators.required, Validators.min(0)]);
         bufferTimeCtrl?.setValidators([Validators.required, Validators.min(0)]);
       } else {
         minSlotTimeCtrl?.clearValidators();
-        maxSlotTimeCtrl?.clearValidators();
         minSlotPriceCtrl?.clearValidators();
         bufferTimeCtrl?.clearValidators();
       }
@@ -112,6 +118,18 @@ export class VenueCreate  implements OnInit {
       minSlotPriceCtrl?.updateValueAndValidity();
       bufferTimeCtrl?.updateValueAndValidity();
     });
+    this.slotManagementForm.get('startDate')?.valueChanges.subscribe(() => this.syncApplyToOtherDatesAvailability());
+    this.slotManagementForm.get('endDate')?.valueChanges.subscribe(() => this.syncApplyToOtherDatesAvailability());
+  }
+
+  syncApplyToOtherDatesAvailability(): void {
+    const applyCtrl = this.slotManagementForm.get('applyToOtherDates');
+    if (this.isMultiDaySlot) {
+      applyCtrl?.setValue(false, { emitEvent: false });
+      applyCtrl?.disable({ emitEvent: false });
+    } else {
+      applyCtrl?.enable({ emitEvent: false });
+    }
   }
 
   isSelected = (date: Date) => {
@@ -190,6 +208,7 @@ export class VenueCreate  implements OnInit {
   }
 
   onSubmit(): void {
+    this.loading.set(true);
     //Create payload to send to backend, including images and form data
     const basicVenueDetails = {
       name: this.basicDetailsForm.value.name,
@@ -206,43 +225,132 @@ export class VenueCreate  implements OnInit {
     
     this.venueService.createVenue(basicVenueDetails).pipe(
       switchMap((response: any) => {  
-        const venueId = response.id;
+        const venueId = response;
         const form = this.slotManagementForm.value;
-
-        const slot = form.slots[0]; // only one slot
-        const slotRequest = {
-          startDateTime: this.combineDateAndTime(form.startDate, slot.start),
-          endDateTime: this.combineDateAndTime(form.endDate, slot.end),
-          slotType: form.slotType,
-          minSlotTime: form.minSlotTime,
-          maxSlotTime: form.maxSlotTime,
-          bufferTime: form.bufferTime,
-          totalSlotPrice: form.totalSlotPrice
-        };
-        //create form data for images and slots
-        return forkJoin({
-          slot: this.venueService.createSlot(
-            venueId,
-            slotRequest,
-            false
-          ),
-          images: this.venueService.uploadImages(
-            venueId,
-            this.venueImages.map(img => img.file),
-            0
-          ),
+  
+        const slotRequests = form.slots.map((slot: any) => {
+          const request: any = {
+            startDateTime: this.combineDateAndTime(slot.startdate, slot.start),
+            endDateTime:   this.combineDateAndTime(slot.enddate, slot.end),
+            slotType:      slot.slotType,
+            totalSlotPrice: slot.price,
+          };
+          if (slot.slotType === 'FLEXIBLE') {
+            request.minSlotTime  = slot.minSlotTime;
+            request.maxSlotTime  = slot.maxSlotTime;
+            request.minSlotPrice = slot.minSlotPrice;
+            request.bufferTime   = slot.bufferTime;
+          }
+          return request; // just build the object now, don't call the API yet
         });
+        // Images start immediately — independent of slot dry-run/confirm flow
+        const images$ = this.venueImages().length > 0
+          ? this.venueService.uploadImages(venueId, this.venueImages().map(img => img.file), 0)
+          : of([]);
+        
+        // Slot pipeline runs its own dry-run -> optional confirm -> real create
+        const slots$ = this.runSlotPipeline(venueId, slotRequests);
+        
+        return forkJoin({ slot: slots$, images: images$ });
+
+        //create form data for images and slots
+        // return forkJoin({
+        //   slot: slotRequests.length > 0 ? this.venueService.createSlotsBulk(venueId, slotRequests, false): of([]),
+        //   images: this.venueImages().length > 0 ? this.venueService.uploadImages(
+        //     venueId,
+        //     this.venueImages().map(img => img.file),
+        //     0
+        //   ) : of([]),
+        // });
       })
     ).subscribe({
       next: (result) => {
+        this.loading.set(false);
+
+        if (result.slot === null) {
+          // images may have succeeded independently — still worth reporting accurately
+          this.openSnackBar('Venue created, but slot creation was cancelled.');
+          this.router.navigate(['/venues']);
+          return;
+        }
+
+        console.log('forkJoin result', result);
         this.openSnackBar('Venue created successfully!');
+        setTimeout(() => {
+          this.router.navigate(['/venues']);
+        }, 0);
       },
       error: (error) => {
+        console.log('Error creating venue', error);
         this.openSnackBar('Error creating venue. Please try again.');
+        this.loading.set(false);
       }
     });
   }
 
+  /** Dry-run -> conditional confirm -> real slot create. Emits null if user declines after warnings. */
+  private runSlotPipeline(venueId: any, slotRequests: any[]) {
+    if (slotRequests.length === 0) {
+      return of([]);
+    }
+
+    return this.callSlotApi(venueId, slotRequests, true).pipe(
+      switchMap((dryRunText: string) => {
+        const warnings = this.extractWarnings(dryRunText);
+
+        if (warnings.length === 0) {
+          return of(dryRunText);
+        }
+
+        return this.confirmWarnings(warnings).pipe(
+          switchMap(confirmed =>
+            confirmed
+              ? this.callSlotApi(venueId, slotRequests, false)
+              : of(null)
+          )
+        );
+      })
+    );
+  }
+
+  /** Routes to the singular endpoint for exactly one slot, bulk otherwise. */
+  private callSlotApi(venueId: any, slotRequests: any[], dryRun: boolean): Observable<string> {
+    if (slotRequests.length === 0) {
+      return of('');
+    }
+    if (slotRequests.length === 1) {
+      return this.venueService.createSlot(venueId, slotRequests[0], dryRun);
+    }
+    return this.venueService.createSlotsBulk(venueId, slotRequests, dryRun);
+  }
+
+  /** Text response from dry-run — non-empty text means there's a warning to show. */
+  private extractWarnings(responseText: string): string[] {
+    if (!responseText) return [];
+    if (responseText === 'Slot Creation Successful') return [];
+    if (responseText === 'Slots Created Successfully') return [];
+    const trimmed = responseText.trim();
+    if (!trimmed) return [];
+    return trimmed.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+  }
+
+  /** Shows the warning text, resolves true if the user confirms, false if they cancel. */
+  private confirmWarnings(warnings: string[]) {
+    const dialogRef = this.dialog.open(ErrorDialog, {
+      data: {
+        title: 'Review before creating slots',
+        message: warnings.join('\n'),
+      } as ErrorDialogData,
+      width: '500px',
+    });
+    return dialogRef.afterClosed().pipe(map(result => result?.action === 'Ok')
+    );
+  }
+  
+  cancelWizard(): void {
+    this.router.navigate(['/venues']);
+  }
+  
   private combineDateAndTime(date: Date, time: Date): string {
     const result = new Date(date);
     
@@ -292,17 +400,28 @@ export class VenueCreate  implements OnInit {
 
   private processFiles(files: File[]): void {
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
     imageFiles.forEach(file => {
       const reader = new FileReader();
+
       reader.onload = (e) => {
-        this.venueImages.push({ file, dataUrl: e.target?.result as string });
+        this.venueImages.update(images => [
+          ...images,
+          {
+            file,
+            dataUrl: e.target?.result as string
+          }
+        ]);
       };
+
       reader.readAsDataURL(file);
     });
   }
 
   removeImage(index: number): void {
-    this.venueImages.splice(index, 1);
+    this.venueImages.update(images =>
+      images.filter((_, i) => i !== index)
+    );
   }
 
 
@@ -363,7 +482,7 @@ export class VenueCreate  implements OnInit {
       return;
     }
 
-    if (slotType === 'flexible') {
+    if (slotType === 'FLEXIBLE') {
       if (slotForm.minSlotTime <= 0) {
         this.openSnackBar('Minimum slot time must be greater than 0.');
         return;
@@ -372,7 +491,7 @@ export class VenueCreate  implements OnInit {
         this.openSnackBar('Minimum slot time cannot be greater than the total slot duration.');
         return;
       }
-      if (maxSlotTime > (endTime - startTime)) {
+      if (maxSlotTime && maxSlotTime > (endTime - startTime)) {
         this.openSnackBar('Maximum slot time cannot be greater than the total slot duration.');
         return;
       }
@@ -386,29 +505,73 @@ export class VenueCreate  implements OnInit {
       }
     }
 
+    const targetRanges = this.computeTargetDateRanges();
+    console.log("targetRanges", targetRanges);
+    if (targetRanges.length === 0) {
+      this.openSnackBar('No dates matched your selection — check your day-of-week filters.');
+      return;
+    }
+
+    // Check every calendar day touched by every generated range for overlaps
+    const conflictDates = new Set<string>();
+    for (const range of targetRanges) {
+      for (const day of this.getDatesBetween(range.start, range.end)) {
+        if (this.isOverlapping(slotForm.start, slotForm.end, day, this.editingIndex)) {
+          conflictDates.add(day.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }));
+        }
+      }
+    }
+    if (conflictDates.size > 0) {
+      this.openSnackBar(`Skipped — overlaps an existing slot on: ${[...conflictDates].join(', ')}`);
+      return;
+    }
+
     if (this.editingIndex !== null) {
       this.slots.removeAt(this.editingIndex);
       this.editingIndex = null;
     }
 
-    const slotGroup: any = {
-      slotType,
-      startdate: [form.startDate, Validators.required],
-      enddate: [form.endDate, Validators.required],
-      start: [slotForm.start, Validators.required],
-      end: [slotForm.end, Validators.required],
-      price: [slotForm.price, [Validators.required, Validators.min(0)]],
-    };
-    if (slotType === 'flexible') {
-      slotGroup.minSlotTime = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
-      slotGroup.maxSlotTime = [slotForm.maxSlotTime, [Validators.required, Validators.min(1)]];
-      slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
-      slotGroup.bufferTime = [slotForm.bufferTime, [Validators.required, Validators.min(0)]];
-    }
-    this.slots.push(this.fb.group(slotGroup));
+    targetRanges.forEach(range => {
+      const slotGroup: any = {
+        slotType,
+        startdate: [range.start, Validators.required],
+        enddate:   [range.end, Validators.required],
+        start:     [slotForm.start, Validators.required],
+        end:       [slotForm.end, Validators.required],
+        price:     [slotForm.price, [Validators.required, Validators.min(0)]],
+      };
+      if (slotType === 'FLEXIBLE') {
+        slotGroup.minSlotTime  = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
+        slotGroup.maxSlotTime  = [slotForm.maxSlotTime];
+        slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
+        slotGroup.bufferTime   = [slotForm.bufferTime, [Validators.required, Validators.min(0)]];
+      }
+      this.slots.push(this.fb.group(slotGroup));
+    });
 
     this.sortSlots();
     this.slotAddForm.reset();
+    this.daysSelected = [];
+    this.slotManagementForm.patchValue({ applyToOtherDates: false, selectedDates: [] });
+
+    // const slotGroup: any = {
+    //   slotType,
+    //   startdate: [form.startDate, Validators.required],
+    //   enddate: [form.endDate, Validators.required],
+    //   start: [slotForm.start, Validators.required],
+    //   end: [slotForm.end, Validators.required],
+    //   price: [slotForm.price, [Validators.required, Validators.min(0)]],
+    // };
+    // if (slotType === 'FLEXIBLE') {
+    //   slotGroup.minSlotTime = [slotForm.minSlotTime, [Validators.required, Validators.min(1)]];
+    //   slotGroup.maxSlotTime = [slotForm.maxSlotTime];
+    //   slotGroup.minSlotPrice = [slotForm.minSlotPrice, [Validators.required, Validators.min(0)]];
+    //   slotGroup.bufferTime = [slotForm.bufferTime, [Validators.required, Validators.min(0)]];
+    // }
+    // this.slots.push(this.fb.group(slotGroup));
+
+    // this.sortSlots();
+    // this.slotAddForm.reset();
   }
 
   getDatesBetween(start: Date, end: Date): Date[] {
@@ -422,6 +585,7 @@ export class VenueCreate  implements OnInit {
 
     return dates;
   }
+  
   
   sortSlots() {
     this.slots.controls.sort((a, b) => {
@@ -437,5 +601,51 @@ export class VenueCreate  implements OnInit {
 
       return startA - startB; // then by start time
     });
+  }
+
+  private stripTime(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  private isSameDay(a: Date, b: Date): boolean {
+    return this.stripTime(a).getTime() === this.stripTime(b).getTime();
+  }
+
+  /** Computes every {start,end} occurrence this "Add Slot" click should produce. */
+  computeTargetDateRanges(): { start: Date; end: Date }[] {
+    const form = this.slotManagementForm.value;
+    const baseStart: Date = form.startDate;
+    const baseEnd: Date = form.endDate;
+
+    if (!form.applyToOtherDates) {
+      return [{ start: baseStart, end: baseEnd }];
+    }
+
+    // applyToOtherDates is only ever true for single-day base slots (enforced via
+    // syncApplyToOtherDatesAvailability), so every replicated occurrence is 1 day.
+    if (form.applyMode === 'selectedDates') {
+      const starts = [...this.daysSelected];
+      if (!starts.some(d => this.isSameDay(d, baseStart))) {
+        starts.unshift(baseStart);
+      }
+      return starts
+        .sort((a, b) => a.getTime() - b.getTime())
+        .map(start => ({ start, end: start }));
+    }
+
+    // dateRange mode
+    const rangeEnd: Date = form.applyEndDate ?? baseStart;
+    const allowedDays: boolean[] = form.daysOfWeek;
+
+    return this.getDatesBetween(baseStart, rangeEnd)
+      .filter(d => allowedDays[d.getDay()])
+      .map(start => ({ start, end: start }));
+  }
+
+  get isMultiDaySlot(): boolean {
+    const start: Date = this.slotManagementForm.get('startDate')?.value;
+    const end: Date = this.slotManagementForm.get('endDate')?.value;
+    if (!start || !end) return false;
+    return !this.isSameDay(start, end);
   }
 }

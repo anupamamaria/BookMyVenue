@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -14,7 +14,7 @@ import { firstValueFrom } from 'rxjs';
 export class Login {
   loginForm: FormGroup;
   errorMessage = '';
-  loading = false;
+  loading = signal(false);
 
   constructor(
     private fb: FormBuilder,
@@ -30,15 +30,27 @@ export class Login {
 
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) return;
-    this.loading = true;
+    
+    this.loading.set(true);
     this.errorMessage = '';
-    const { email, password } = this.loginForm.value;
-    const response = await firstValueFrom(this.authService.login(email, password));
-    this.loading = false;
-    this.dialogRef.close({
-      action: 'login-success',
-      user: response
-    });
+    
+    try {
+      const { email, password } = this.loginForm.value;
+    
+      const response = await firstValueFrom(
+        this.authService.login(email, password)
+      );
+    
+      this.dialogRef.close({
+        action: 'login-success',
+        user: response
+      });
+    
+    } catch (err: any) {
+      this.errorMessage = 'Invalid email or password';
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   switchToSignup(): void {

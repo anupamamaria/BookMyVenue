@@ -10,26 +10,26 @@
     <div class="overview-stats">
       <div class="stat-chip pending">
         <span class="label">Pending</span>
-        <span class="value">{{ pendingVenues.length }}</span>
+        <span class="value">{{ pendingTotal() }}</span>
       </div>
       <div class="stat-chip approved">
         <span class="label">Approved</span>
-        <span class="value">{{ approvedVenues.length }}</span>
+        <span class="value">{{ approvedTotal() }}</span>
       </div>
       <div class="stat-chip rejected">
         <span class="label">Rejected</span>
-        <span class="value">{{ rejectedVenues.length }}</span>
+        <span class="value">{{ rejectedTotal() }}</span>
       </div>
     </div>
   </header>
 
-  <mat-tab-group class="tabs admin-tabs">
+  <mat-tab-group class="tabs admin-tabs" (selectedIndexChange)="onTabChanged($event)">
     <mat-tab label="Pending Approvals">
-      <div class="cards-shell" *ngIf="pendingVenues.length > 0; else pendingEmpty">
+      <div class="cards-shell" *ngIf="pendingVenues().length > 0; else pendingEmpty">
         <div class="venue-grid">
-          <article class="venue-card" *ngFor="let venue of pendingVenues">
+          <article class="venue-card" *ngFor="let venue of pendingVenues()">
             <div class="image-wrapper">
-              <img *ngIf="venue.imageUrl; else pendingNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
+              <img *ngIf="venue.imagePath; else pendingNoImage" [src]="venue.imagePath" [alt]="venue.name" class="venue-image" />
               <ng-template #pendingNoImage>
                 <div class="venue-image venue-image--placeholder">No Image</div>
               </ng-template>
@@ -38,15 +38,20 @@
 
             <div class="card-content">
               <h3>{{ venue.name }}</h3>
-              <p class="owner">Owner: {{ venue.userName }}</p>
+              <span class="owner">
+                <mat-icon>person</mat-icon>
+                <span class="owner-name">{{ venue.venueOwnerName }}</span>
+              </span>
 
               <div class="info-row">
-                <span class="info-pill">Id {{ venue.id }}</span>
+                <span class="info-pill">Id {{ venue.venueId }}</span>
                 <span class="info-pill">{{ venue.capacity }} capacity</span>
+                <span class="location">
+                  <mat-icon>place</mat-icon>
+                  <span>{{ venue.location }}</span>
+                </span>
               </div>
-
-              <p class="location">{{ venue.location }}</p>
-
+              
               <div class="action-buttons">
                 <button mat-stroked-button color="primary" class="action-btn" (click)="approve(venue)">
                   Approve
@@ -62,30 +67,44 @@
       <ng-template #pendingEmpty>
         <p class="empty-state">No venues waiting for approval.</p>
       </ng-template>
+      <div class="loading-more" *ngIf="pendingLoading()">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="24"
+          strokeWidth="3">
+        </mat-progress-spinner>
+      
+        <span>Loading...</span>
+      </div>
     </mat-tab>
 
-    <mat-tab label="Approved Venues">
-      <div class="cards-shell" *ngIf="approvedVenues.length > 0; else approvedEmpty">
-        <div class="venue-grid">
-          <article class="venue-card" *ngFor="let venue of approvedVenues">
-            <div class="image-wrapper">
-              <img *ngIf="venue.imageUrl; else approvedNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
-              <ng-template #approvedNoImage>
-                <div class="venue-image venue-image--placeholder">No Image</div>
-              </ng-template>
-              <span class="status-badge approved">Approved</span>
-            </div>
-
-            <div class="card-content">
-              <h3>{{ venue.name }}</h3>
-              <p class="owner">Owner: {{ venue.userName }}</p>
-
-              <div class="info-row">
-                <span class="info-pill">Id {{ venue.id }}</span>
-                <span class="info-pill">{{ venue.capacity }} capacity</span>
+      <mat-tab label="Approved Venues">
+        <div class="cards-shell" *ngIf="approvedVenues().length > 0; else approvedEmpty">
+          <div class="venue-grid">
+            <article class="venue-card" *ngFor="let venue of approvedVenues()">
+              <div class="image-wrapper">
+                <img *ngIf="venue.imagePath; else approvedNoImage" [src]="venue.imagePath" [alt]="venue.name" class="venue-image" />
+                <ng-template #approvedNoImage>
+                  <div class="venue-image venue-image--placeholder">No Image</div>
+                </ng-template>
+                <span class="status-badge approved">Approved</span>
               </div>
 
-              <p class="location">{{ venue.location }}</p>
+              <div class="card-content">
+                <h3>{{ venue.name }}</h3>
+                <span class="owner">
+                <mat-icon>person</mat-icon>
+                <span class="owner-name">{{ venue.venueOwnerName }}</span>
+              </span>
+
+              <div class="info-row">
+                <span class="info-pill">Id {{ venue.venueId }}</span>
+                <span class="info-pill">{{ venue.capacity }} capacity</span>
+                <span class="location">
+                  <mat-icon>place</mat-icon>
+                  <span>{{ venue.location }}</span>
+                </span>
+              </div>
             </div>
           </article>
         </div>
@@ -93,14 +112,23 @@
       <ng-template #approvedEmpty>
         <p class="empty-state">No approved venues yet.</p>
       </ng-template>
+      <div class="loading-more" *ngIf="approvedLoading()">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="24"
+          strokeWidth="3">
+        </mat-progress-spinner>
+      
+        <span>Loading...</span>
+      </div>
     </mat-tab>
 
     <mat-tab label="Rejected Venues">
-      <div class="cards-shell" *ngIf="rejectedVenues.length > 0; else rejectedEmpty">
+      <div class="cards-shell" *ngIf="rejectedVenues().length > 0; else rejectedEmpty">
         <div class="venue-grid">
-          <article class="venue-card" *ngFor="let venue of rejectedVenues">
+          <article class="venue-card" *ngFor="let venue of rejectedVenues()">
             <div class="image-wrapper">
-              <img *ngIf="venue.imageUrl; else rejectedNoImage" [src]="venue.imageUrl" [alt]="venue.name" class="venue-image" />
+              <img *ngIf="venue.imagePath; else rejectedNoImage" [src]="venue.imagePath" [alt]="venue.name" class="venue-image" />
               <ng-template #rejectedNoImage>
                 <div class="venue-image venue-image--placeholder">No Image</div>
               </ng-template>
@@ -109,11 +137,18 @@
 
             <div class="card-content">
               <h3>{{ venue.name }}</h3>
-              <p class="owner">Owner: {{ venue.userName }}</p>
+              <span class="owner">
+                <mat-icon>person</mat-icon>
+                <span class="owner-name">{{ venue.venueOwnerName }}</span>
+              </span>
 
               <div class="info-row">
-                <span class="info-pill">Id {{ venue.id }}</span>
+                <span class="info-pill">Id {{ venue.venueId }}</span>
                 <span class="info-pill">{{ venue.capacity }} capacity</span>
+                <span class="location">
+                  <mat-icon>place</mat-icon>
+                  <span>{{ venue.location }}</span>
+                </span>
               </div>
 
               <p class="location">{{ venue.location }}</p>
@@ -124,6 +159,15 @@
       <ng-template #rejectedEmpty>
         <p class="empty-state">No rejected venues yet.</p>
       </ng-template>
+      <div class="loading-more" *ngIf="rejectedLoading()">
+        <mat-progress-spinner
+          mode="indeterminate"
+          diameter="24"
+          strokeWidth="3">
+        </mat-progress-spinner>
+      
+        <span>Loading...</span>
+      </div>
     </mat-tab>
   </mat-tab-group>
 </section>

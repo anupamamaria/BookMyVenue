@@ -1,1 +1,34 @@
-<p>booking-banner works!</p>
+<div class="booking-banner">
+  <img
+    class="banner-image"
+    [src]="booking.imagePath"
+    [alt]="booking.venueName">
+
+  <div class="banner-content">
+    <div class="banner-label">
+      Upcoming Booking
+    </div>
+    <h3>{{ booking.venueName }}</h3>
+    <div class="banner-info">
+      <span>
+        <span class="material-symbols-outlined">location_on</span>
+        {{ booking.location }}
+      </span>
+      <span>
+        <span class="material-symbols-outlined">calendar_today</span>
+        {{ booking.startDateTime | date:'dd MMM yyyy' }}
+      </span>
+      <span>
+        <span class="material-symbols-outlined">schedule</span>
+        {{ booking.startDateTime | date:'hh:mm a' }}
+        -
+        {{ booking.endDateTime | date:'hh:mm a' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="status-pill" [ngClass]="booking.bookingStatus?.toLowerCase()">
+    <span class="status-dot"></span>
+    {{ booking.bookingStatus }}
+  </div>
+</div>

@@ -249,30 +249,28 @@
 
 .dropdown-divider { margin: 4px 0; border-color: #ebebeb; }
 
-/* ─── Filters Panel ─── */
-.filters-panel {
-  background: #f7f7f7;
-  border-bottom: 1px solid #ebebeb;
-  padding: 20px 40px;
-  animation: slideDown 0.2s ease;
-}
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.filters-container { max-width: 1400px; margin: 0 auto; }
-
-.filters-title { font-size: 16px; font-weight: 700; color: #222; margin: 0 0 16px; }
-
-.amenity-filters { display: flex; gap: 24px; flex-wrap: wrap; }
-
-.amenity-checkbox {
-  display: flex;
+.checkbox-label {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  .amenity-icon { font-size: 20px; color: #717171; }
+}
+
+.when-field {
+  cursor: pointer;
+}
+
+.date-display {
+  font-size: 13px;
+  color: #717171;
+}
+
+.hidden-range-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 
 @media (max-width: 768px) {
